@@ -708,17 +708,44 @@ function miniStatusCard(label, text){
   return `<div class="mini-status-card"><b>${label}</b><span>${text}</span></div>`;
 }
 
-function miniScaffold({title,badge,subtitle,goal,how,tip,statusHtml="",bodyHtml="",actionsHtml=""}){
+function miniThemeIcon(type){
+  return ({
+    breach:"⌘",
+    word:"🔐",
+    node:"🛰",
+    pipe:"🔀",
+    signal:"📡",
+    memory:"🧠",
+    sorting:"🗂",
+    route:"🕸",
+    pattern:"🧩"
+  })[type] || "✦";
+}
+
+function miniScaffold({title,badge,subtitle,goal,how,tip,statusHtml="",bodyHtml="",actionsHtml="",progress=0}){
+  const type = (miniGame && miniGame.type) ? miniGame.type : "breach";
+  const icon = miniThemeIcon(type);
+  const safeProgress = clamp(progress || 0, 0, 100);
   return `${miniHeader(title,badge)}
-    <div class="mini-shell">
-      <p class="mini-sub">${subtitle}</p>
+    <div class="mini-shell theme-${type}">
+      <div class="mini-hero mini-celebrate">
+        <div class="mini-hero-icon">${icon}</div>
+        <div class="mini-hero-copy">
+          <h3>${title}</h3>
+          <p>${subtitle}</p>
+        </div>
+      </div>
+      <div class="mini-progress-wrap">
+        <div class="mini-progress-top"><span>Mission Sync</span><span>${Math.round(safeProgress)}%</span></div>
+        <div class="mini-progress"><div class="mini-progress-fill" style="width:${safeProgress}%"></div></div>
+      </div>
       <div class="mini-guide">
         ${miniGuideBox("Tujuan", goal)}
         ${miniGuideBox("Cara Main", how)}
         ${miniGuideBox("Tips", tip)}
       </div>
       ${statusHtml ? `<div class="mini-status-grid">${statusHtml}</div>` : ""}
-      <div class="mini-board">${bodyHtml}</div>
+      <div class="mini-board"><div class="mini-section-label">◈ Interactive Board</div>${bodyHtml}</div>
       ${actionsHtml ? `<div class="mini-actions">${actionsHtml}</div>` : ""}
     </div>`;
 }
@@ -750,7 +777,8 @@ function renderBreachMiniGame(){
     tip:"Kalau salah 1 langkah saja, misi gagal. Gunakan tombol Undo kalau mau batal 1 langkah.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:(miniGame.selected.length/miniGame.target.length)*100
   });
 }
 
@@ -794,7 +822,8 @@ function renderWordGuessMiniGame(){
     tip:"Gunakan hint untuk menyaring pilihan. Semakin besar angka match, semakin dekat ke jawaban.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:((miniGame.hints.length)/(miniGame.hints.length+miniGame.attempts || 1))*100
   });
 }
 
@@ -842,7 +871,8 @@ function renderNodeCaptureMiniGame(){
     tip:"Salah pilih akan menambah Trace. Kalau Trace penuh, misi gagal.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:(miniGame.step/(miniGame.path.length-1))*100
   });
 }
 
@@ -888,7 +918,8 @@ function renderPipeFlowMiniGame(){
     tip:"Kalau kartu berwarna hijau berarti posisi itu sudah benar. Fokus ubah yang merah saja.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:(correctCount/4)*100
   });
 }
 
@@ -932,7 +963,8 @@ function renderSignalTimingMiniGame(){
     tip:"Jangan panik. Zona hijau adalah area aman. Tool Signal Stabilizer membuat zona lebih lebar.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:50
   });
   clearInterval(signalTimer);
   signalTimer = setInterval(()=>{
@@ -975,7 +1007,8 @@ function renderMemoryPacketMiniGame(){
     tip:"Fokus ke urutan, bukan cuma simbolnya. Panjang sequence tergantung tingkat kesulitan.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:(miniGame.input.length/miniGame.sequence.length)*100
   });
   if(!miniGame.hidden){
     clearTimeout(memoryTimer);
@@ -1029,7 +1062,8 @@ function renderDataSortingMiniGame(){
     tip:"Terlalu banyak salah kategori akan membuat misi gagal.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:(miniGame.index/miniGame.packets.length)*100
   });
 }
 
@@ -1073,7 +1107,8 @@ function renderStealthRouteMiniGame(){
     tip:"Route dengan node berbahaya seperti PUBLIC WIFI atau TRACE NODE biasanya lebih berisiko.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:30
   });
 }
 
@@ -1112,7 +1147,8 @@ function renderFirewallPatternMiniGame(){
     tip:"Coba lihat selisih angka, urutan huruf, atau pola penomoran untuk menemukan jawaban.",
     statusHtml:status,
     bodyHtml:body,
-    actionsHtml:actions
+    actionsHtml:actions,
+    progress:35
   });
 }
 
@@ -1128,7 +1164,7 @@ function renderTerminal(){
     <div class="card span-8">
       <h2>Neon Terminal</h2>
       <div class="terminal" id="termOut">
-        <p class="line green">CYBERTRACE NEON SHELL v8.0</p>
+        <p class="line green">CYBERTRACE NEON SHELL v9.0</p>
         <p class="line">Command fiktif: <span class="yellowtxt">scan</span>, <span class="yellowtxt">clean</span>, <span class="yellowtxt">trace</span>, <span class="yellowtxt">bounty</span>, <span class="yellowtxt">status</span>, <span class="yellowtxt">help</span></p>
         <p class="line bluetxt">Semua command hanya simulasi game.</p>
       </div>
