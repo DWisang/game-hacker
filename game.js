@@ -576,6 +576,30 @@ function closeModal(){
   $("modal").classList.remove("show");
 }
 
+
+function miniGuideBox(label, text){
+  return `<div class="guide-box"><b>${label}</b><span>${text}</span></div>`;
+}
+
+function miniStatusCard(label, text){
+  return `<div class="mini-status-card"><b>${label}</b><span>${text}</span></div>`;
+}
+
+function miniScaffold({title,badge,subtitle,goal,how,tip,statusHtml="",bodyHtml="",actionsHtml=""}){
+  return `${miniHeader(title,badge)}
+    <div class="mini-shell">
+      <p class="mini-sub">${subtitle}</p>
+      <div class="mini-guide">
+        ${miniGuideBox("Tujuan", goal)}
+        ${miniGuideBox("Cara Main", how)}
+        ${miniGuideBox("Tips", tip)}
+      </div>
+      ${statusHtml ? `<div class="mini-status-grid">${statusHtml}</div>` : ""}
+      <div class="mini-board">${bodyHtml}</div>
+      ${actionsHtml ? `<div class="mini-actions">${actionsHtml}</div>` : ""}
+    </div>`;
+}
+
 function createBreachSequence(q){
   const tokens = ["A1","7X","B4","C9","D2","F0","9Z","K3","R8","N6"];
   const len = clamp(2+q.difficulty,3,6);
@@ -584,12 +608,27 @@ function createBreachSequence(q){
 }
 
 function renderBreachMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Breach Sequence","GRID CODE")}
-  <p>Pilih kode dari grid untuk menyusun sequence target.</p>
-  <div class="mini-sequence">TARGET: ${miniGame.target.join(" → ")}</div>
-  <div class="mini-sequence">INPUT: ${miniGame.selected.length ? miniGame.selected.join(" → ") : "-"}</div>
-  <div class="mini-grid cols-4">${miniGame.grid.map((t,i)=>`<button class="mini-cell" type="button" data-breach="${i}">${t}</button>`).join("")}</div>
-  <div class="actions"><button class="btn warn" type="button" data-action="breachUndo">Undo</button><button class="btn danger" type="button" data-action="abortMini">Abort</button></div>`;
+  const status = [
+    miniStatusCard("Target", `${miniGame.target.length} kode`),
+    miniStatusCard("Progress", `${miniGame.selected.length}/${miniGame.target.length}`),
+    miniStatusCard("Mode", "Urut dari kiri ke kanan")
+  ].join("");
+  const body = `
+    <div class="mini-sequence"><b>Target</b><br>${miniGame.target.join(" → ")}</div>
+    <div class="mini-sequence"><b>Input Kamu</b><br>${miniGame.selected.length ? miniGame.selected.join(" → ") : "Belum ada input"}</div>
+    <div class="mini-grid cols-4">${miniGame.grid.map((t,i)=>`<button class="mini-cell" type="button" data-breach="${i}">${t}<small>Tap pilih</small></button>`).join("")}</div>`;
+  const actions = `<button class="btn warn" type="button" data-action="breachUndo">Undo</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Breach Sequence",
+    badge:"GRID CODE",
+    subtitle:"Susun kode persis seperti urutan target.",
+    goal:"Cocokkan semua kode pada urutan target.",
+    how:"Tap satu per satu kode di grid. Urutan tap harus sama persis dengan target di atas.",
+    tip:"Kalau salah 1 langkah saja, misi gagal. Gunakan tombol Undo kalau mau batal 1 langkah.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function breachPick(i){
@@ -614,11 +653,26 @@ function createWordGuess(q){
 }
 
 function renderWordGuessMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Terminal Word Guess","PASSWORD")}
-  <p>Pilih password. Hint menunjukkan huruf benar di posisi benar.</p>
-  <div class="mini-sequence">Attempts: ${miniGame.attempts}</div>
-  <div class="mini-grid cols-2">${miniGame.words.map(w=>`<button class="mini-cell" type="button" data-word="${w}">${w}</button>`).join("")}</div>
-  <div class="mini-sequence">${miniGame.hints.length ? miniGame.hints.map(h=>`<div>${h}</div>`).join("") : "Belum ada hint."}</div>`;
+  const status = [
+    miniStatusCard("Attempts", `${miniGame.attempts} sisa`),
+    miniStatusCard("Panjang Kata", `${miniGame.answer.length} huruf`),
+    miniStatusCard("Hint", `${miniGame.hints.length} data`) 
+  ].join("");
+  const body = `
+    <div class="mini-grid cols-2">${miniGame.words.map(w=>`<button class="mini-cell" type="button" data-word="${w}">${w}<small>Pilih password</small></button>`).join("")}</div>
+    <div class="mini-history">${miniGame.hints.length ? miniGame.hints.map(h=>`<div class="mini-hint-line">${h}</div>`).join("") : `<div class="mini-hint-line">Belum ada hint. Pilih salah satu kata untuk memulai.</div>`}</div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Terminal Word Guess",
+    badge:"PASSWORD",
+    subtitle:"Cari password yang benar dari beberapa pilihan.",
+    goal:"Pilih 1 kata yang tepat sebelum attempt habis.",
+    how:"Tap satu kata. Kalau salah, kamu dapat hint berupa jumlah huruf yang tepat di posisi yang tepat.",
+    tip:"Gunakan hint untuk menyaring pilihan. Semakin besar angka match, semakin dekat ke jawaban.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function wordGuess(word){
@@ -628,7 +682,7 @@ function wordGuess(word){
     if(word[i] === miniGame.answer[i]) match++;
   }
   miniGame.attempts--;
-  miniGame.hints.push(`${word}: ${match}/${miniGame.answer.length} huruf benar`);
+  miniGame.hints.push(`${word}: ${match}/${miniGame.answer.length} huruf benar pada posisi yang benar`);
   if(miniGame.attempts <= 0) return finishMiniGame(false,`Jawaban: ${miniGame.answer}.`);
   renderWordGuessMiniGame();
 }
@@ -640,11 +694,33 @@ function createNodeCapture(q){
 }
 
 function renderNodeCaptureMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Node Capture","NETWORK")}
-  <p>Capture node sesuai jalur aman sebelum trace penuh.</p>
-  <div class="mini-sequence">PATH: ${miniGame.path.slice(0,miniGame.step).join(" → ")} → ?</div>
-  <div class="mini-sequence">TRACE: ${miniGame.trace}/${miniGame.maxTrace}</div>
-  <div class="mini-grid cols-3">${miniGame.nodes.map(n=>`<button class="mini-cell" type="button" data-node="${n}">${n}</button>`).join("")}</div>`;
+  const status = [
+    miniStatusCard("Progress", `${miniGame.step}/${miniGame.path.length-1} node`),
+    miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`),
+    miniStatusCard("Target Akhir", "ROOT")
+  ].join("");
+  const track = miniGame.path.map((node,idx)=>{
+    let cls = "locked";
+    if(idx < miniGame.step) cls = "done";
+    if(idx === miniGame.step) cls = "current";
+    return `<span class="mini-pill ${cls}">${node}</span>`;
+  }).join("");
+  const body = `
+    <div class="mini-node-track">${track}</div>
+    <div class="mini-sequence"><b>Node berikutnya</b><br>Pilih node yang benar untuk melanjutkan jalur menuju ROOT.</div>
+    <div class="mini-grid cols-3">${miniGame.nodes.map(n=>`<button class="mini-cell" type="button" data-node="${n}">${n}<small>Pilih node</small></button>`).join("")}</div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Node Capture",
+    badge:"NETWORK",
+    subtitle:"Cari node yang benar tanpa memicu trace berlebihan.",
+    goal:"Ikuti jalur yang benar hingga ROOT.",
+    how:"Tap node yang menurutmu adalah node berikutnya dalam jalur aman.",
+    tip:"Salah pilih akan menambah Trace. Kalau Trace penuh, misi gagal.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function nodePick(node){
@@ -666,12 +742,31 @@ function createPipeFlow(q){
 }
 
 function renderPipeFlowMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Pipe Data Flow","FLOW")}
-  <p>Tap tile untuk rotate sampai aliran cocok.</p>
-  <div class="mini-sequence">Target: START → ─ → ┐ → │ → ┘ → CORE</div>
-  <div class="mini-sequence">Moves: ${miniGame.moves}</div>
-  <div class="mini-grid cols-4">${miniGame.current.map((p,i)=>`<button class="mini-cell pipe-cell" type="button" data-pipe="${i}">${p}</button>`).join("")}</div>
-  <div class="actions"><button class="btn primary" type="button" data-action="pipeSubmit">Submit Flow</button></div>`;
+  const correctCount = miniGame.current.filter((p,i)=>p===miniGame.answer[i]).length;
+  const status = [
+    miniStatusCard("Moves", `${miniGame.moves}`),
+    miniStatusCard("Benar", `${correctCount}/4 posisi`),
+    miniStatusCard("Tujuan", "Samakan 4 ubin")
+  ].join("");
+  const targetRow = miniGame.answer.map((p,i)=>`<div class="mini-flow-card"><span class="slot-no">Target ${i+1}</span><div class="pipe-big">${p}</div></div>`).join("");
+  const currentRow = miniGame.current.map((p,i)=>`<button class="mini-pipe-card ${p===miniGame.answer[i] ? "good" : "bad"}" type="button" data-pipe="${i}"><span class="slot-no">Tile ${i+1}</span><div class="pipe-big">${p}</div><small>${p===miniGame.answer[i] ? "Sudah cocok" : "Tap untuk rotate"}</small></button>`).join("");
+  const body = `
+    <div class="mini-sequence"><b>Cara baca</b><br>Baris <b>Target</b> adalah susunan akhir. Baris <b>Tile Kamu</b> adalah ubin yang bisa kamu tap untuk diputar. Setiap tap akan mengganti bentuk ubin.</div>
+    <div class="mini-legend">Urutan rotate: ─ → │ → ┌ → ┐ → └ → ┘ → kembali ke ─</div>
+    <div class="mini-flow-row">${targetRow}</div>
+    <div class="mini-flow-grid">${currentRow}</div>`;
+  const actions = `<button class="btn primary" type="button" data-action="pipeSubmit">Submit Flow</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Pipe Data Flow",
+    badge:"FLOW",
+    subtitle:"Susun jalur data dengan memutar 4 ubin sampai sama dengan target.",
+    goal:"Buat 4 tile kamu sama persis dengan 4 tile target dari kiri ke kanan.",
+    how:"Tap tile pada baris bawah untuk rotate bentuknya. Cocokkan semua tile, lalu tekan Submit Flow.",
+    tip:"Kalau kartu berwarna hijau berarti posisi itu sudah benar. Fokus ubah yang merah saja.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function pipeRotate(i){
@@ -695,10 +790,27 @@ function createSignalTiming(q){
 }
 
 function renderSignalTimingMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Signal Timing","QUICK HACK")}
-  <p>Tap STOP saat cursor putih berada di zona hijau.</p>
-  <div class="signal-box"><div class="signal-zone" style="left:${miniGame.zoneStart}%;width:${miniGame.zoneEnd-miniGame.zoneStart}%"></div><div class="signal-cursor" id="signalCursor"></div></div>
-  <div class="actions"><button class="btn primary" type="button" data-action="signalStop">STOP</button></div>`;
+  const zoneSize = Math.round(miniGame.zoneEnd-miniGame.zoneStart);
+  const status = [
+    miniStatusCard("Zona Aman", `${zoneSize}%`),
+    miniStatusCard("Kecepatan", `${miniGame.speed}`),
+    miniStatusCard("Aksi", "Tekan STOP")
+  ].join("");
+  const body = `
+    <div class="mini-sequence"><b>Instruksi</b><br>Tunggu garis putih bergerak masuk ke area hijau, lalu tap tombol STOP.</div>
+    <div class="signal-box"><div class="signal-zone" style="left:${miniGame.zoneStart}%;width:${miniGame.zoneEnd-miniGame.zoneStart}%"></div><div class="signal-cursor" id="signalCursor"></div></div>`;
+  const actions = `<button class="btn primary" type="button" data-action="signalStop">STOP</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Signal Timing",
+    badge:"QUICK HACK",
+    subtitle:"Uji timing. Hentikan sinyal tepat di area aman.",
+    goal:"Tekan STOP saat garis putih ada di zona hijau.",
+    how:"Lihat gerakan garis putih dari kiri ke kanan dan sebaliknya. Tap STOP pada waktu yang pas.",
+    tip:"Jangan panik. Zona hijau adalah area aman. Tool Signal Stabilizer membuat zona lebih lebar.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
   clearInterval(signalTimer);
   signalTimer = setInterval(()=>{
     miniGame.cursor += miniGame.dir*miniGame.speed;
@@ -717,15 +829,31 @@ function signalStop(){
 function createMemoryPacket(q){
   const symbols = ["◇","○","△","□","✦","⬡"];
   const len = clamp(3+q.difficulty,3,7);
-  return {type:"memory",name:"Memory Packet",symbols,sequence:Array.from({length:len},()=>pick(symbols)),input:[],hidden:false};
+  return {type:"memory",name:"Memory Packet",symbols,sequence:Array.from({length:len},()=>pick(symbols)),input:[],hidden:false,revealMs:1800+skillBonus("ai")*250};
 }
 
 function renderMemoryPacketMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Memory Packet","DECRYPT")}
-  <p>Ingat urutan simbol. Setelah hilang, ulangi urutannya.</p>
-  <div class="mini-sequence">${miniGame.hidden ? "Sequence hidden. Masukkan urutan." : miniGame.sequence.join(" → ")}</div>
-  <div class="mini-sequence">INPUT: ${miniGame.input.length ? miniGame.input.join(" → ") : "-"}</div>
-  <div class="mini-grid cols-3">${miniGame.symbols.map(s=>`<button class="mini-cell" type="button" ${miniGame.hidden ? `data-memory="${s}"` : "disabled"}>${s}</button>`).join("")}</div>`;
+  const status = [
+    miniStatusCard("Panjang", `${miniGame.sequence.length} simbol`),
+    miniStatusCard("Progress", `${miniGame.input.length}/${miniGame.sequence.length}`),
+    miniStatusCard("Status", miniGame.hidden ? "Saatnya input" : "Hafalkan dulu")
+  ].join("");
+  const body = `
+    <div class="mini-sequence"><b>${miniGame.hidden ? "Sequence disembunyikan" : "Hafalkan sequence berikut"}</b><br>${miniGame.hidden ? "Masukkan ulang urutan simbol sesuai yang tadi muncul." : miniGame.sequence.join(" → ")}</div>
+    <div class="mini-sequence"><b>Input Kamu</b><br>${miniGame.input.length ? miniGame.input.join(" → ") : "Belum ada input"}</div>
+    <div class="mini-grid cols-3 mini-memory-grid">${miniGame.symbols.map(s=>`<button class="mini-cell" type="button" ${miniGame.hidden ? `data-memory="${s}"` : "disabled"}>${s}<small>${miniGame.hidden ? "Tap simbol" : "Tunggu..."}</small></button>`).join("")}</div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Memory Packet",
+    badge:"DECRYPT",
+    subtitle:"Tes memori untuk membaca paket terenkripsi.",
+    goal:"Ingat lalu ulangi urutan simbol yang muncul.",
+    how:"Pertama hafalkan sequence. Setelah hilang, tap simbol satu per satu sesuai urutan aslinya.",
+    tip:"Fokus ke urutan, bukan cuma simbolnya. Panjang sequence tergantung tingkat kesulitan.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
   if(!miniGame.hidden){
     clearTimeout(memoryTimer);
     memoryTimer = setTimeout(()=>{
@@ -733,7 +861,7 @@ function renderMemoryPacketMiniGame(){
         miniGame.hidden = true;
         renderMemoryPacketMiniGame();
       }
-    },1800+skillBonus("ai")*250);
+    },miniGame.revealMs);
   }
 }
 
@@ -759,11 +887,27 @@ function createDataSorting(q){
 
 function renderDataSortingMiniGame(){
   const p = miniGame.packets[miniGame.index];
-  $("modalPanel").innerHTML = `${miniHeader("Data Sorting","CLEANUP")}
-  <p>Kirim paket data ke kategori yang benar.</p>
-  <div class="mini-sequence">PACKET: ${p.name}</div>
-  <div class="mini-sequence">Progress: ${miniGame.index+1}/${miniGame.packets.length} · Mistake: ${miniGame.mistakes}/${miniGame.maxMistakes}</div>
-  <div class="mini-grid cols-2">${["Quarantine","Vault","Archive","Clean"].map(cat=>`<button class="mini-cell" type="button" data-sort="${cat}">${cat}</button>`).join("")}</div>`;
+  const status = [
+    miniStatusCard("Progress", `${miniGame.index+1}/${miniGame.packets.length}`),
+    miniStatusCard("Mistake", `${miniGame.mistakes}/${miniGame.maxMistakes}`),
+    miniStatusCard("Packet", p.name)
+  ].join("");
+  const body = `
+    <div class="mini-sorting-target">${p.name}</div>
+    <div class="mini-sequence"><b>Pilih kategori yang benar</b><br>Kirim packet <b>${p.name}</b> ke folder yang sesuai.</div>
+    <div class="mini-grid cols-2">${["Quarantine","Vault","Archive","Clean"].map(cat=>`<button class="mini-cell mini-answer-option" type="button" data-sort="${cat}"><div><b>${cat}</b><small>Tap untuk kirim ke sini</small></div></button>`).join("")}</div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Data Sorting",
+    badge:"CLEANUP",
+    subtitle:"Sortir data ke folder yang tepat.",
+    goal:"Pilih kategori yang cocok untuk setiap packet.",
+    how:"Lihat nama packet di atas, lalu tap salah satu kategori di bawahnya.",
+    tip:"Terlalu banyak salah kategori akan membuat misi gagal.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function sortPick(cat){
@@ -790,9 +934,24 @@ function createStealthRoute(q){
 }
 
 function renderStealthRouteMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Stealth Route","PATHFINDING")}
-  <p>Pilih jalur paling aman menuju target.</p>
-  <div class="mini-grid">${miniGame.routes.map(r=>`<button class="mini-cell" type="button" data-route="${encodeURIComponent(r.name)}"><div><b>${r.name}</b><div class="mini-small">Risk: ${r.risk}</div></div></button>`).join("")}</div>`;
+  const status = [
+    miniStatusCard("Pilihan", `${miniGame.routes.length} route`),
+    miniStatusCard("Tujuan", "Capai TARGET"),
+    miniStatusCard("Fokus", "Cari jalur aman")
+  ].join("");
+  const body = `<div class="mini-grid">${miniGame.routes.map(r=>`<button class="mini-cell mini-route-option" type="button" data-route="${encodeURIComponent(r.name)}"><div><b>${r.name}</b><small>Risk: ${r.risk}</small></div></button>`).join("")}</div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Stealth Route",
+    badge:"PATHFINDING",
+    subtitle:"Pilih rute infiltrasi paling aman.",
+    goal:"Pilih satu route yang paling aman menuju TARGET.",
+    how:"Baca setiap jalur dan level risikonya, lalu tap route yang menurutmu paling aman.",
+    tip:"Route dengan node berbahaya seperti PUBLIC WIFI atau TRACE NODE biasanya lebih berisiko.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function routePick(encoded){
@@ -812,10 +971,26 @@ function createFirewallPattern(){
 }
 
 function renderFirewallPatternMiniGame(){
-  $("modalPanel").innerHTML = `${miniHeader("Firewall Pattern","LOGIC")}
-  <p>Pecahkan pola firewall.</p>
-  <div class="mini-sequence">${miniGame.prompt}</div>
-  <div class="mini-grid cols-2">${miniGame.options.map(o=>`<button class="mini-cell" type="button" data-pattern="${o}">${o}</button>`).join("")}</div>`;
+  const status = [
+    miniStatusCard("Tipe", "Logic Pattern"),
+    miniStatusCard("Pilihan", `${miniGame.options.length} jawaban`),
+    miniStatusCard("Target", "Cari lanjutan pola")
+  ].join("");
+  const body = `
+    <div class="mini-sequence"><b>Pola Firewall</b><br>${miniGame.prompt}</div>
+    <div class="mini-answer-grid">${miniGame.options.map(o=>`<button class="mini-cell mini-answer-option" type="button" data-pattern="${o}"><div><b>${o}</b><small>Pilih jawaban</small></div></button>`).join("")}</div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Firewall Pattern",
+    badge:"LOGIC",
+    subtitle:"Pecahkan pola logika untuk menembus firewall.",
+    goal:"Pilih jawaban yang paling tepat untuk melanjutkan pola.",
+    how:"Amati urutan angka atau simbol, cari pola perubahannya, lalu pilih jawaban yang cocok.",
+    tip:"Coba lihat selisih angka, urutan huruf, atau pola penomoran untuk menemukan jawaban.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions
+  });
 }
 
 function patternPick(o){
@@ -830,7 +1005,7 @@ function renderTerminal(){
     <div class="card span-8">
       <h2>Neon Terminal</h2>
       <div class="terminal" id="termOut">
-        <p class="line green">CYBERTRACE NEON SHELL v6.0</p>
+        <p class="line green">CYBERTRACE NEON SHELL v7.0</p>
         <p class="line">Command fiktif: <span class="yellowtxt">scan</span>, <span class="yellowtxt">clean</span>, <span class="yellowtxt">trace</span>, <span class="yellowtxt">bounty</span>, <span class="yellowtxt">status</span>, <span class="yellowtxt">help</span></p>
         <p class="line bluetxt">Semua command hanya simulasi game.</p>
       </div>
