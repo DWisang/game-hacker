@@ -1276,3 +1276,78 @@ textarea{
     font-size:22px;
   }
 }
+
+
+/* V8 HEAT PUNISHMENT SYSTEM */
+.heat-pill.heat-low{
+  border-color:rgba(57,255,136,.35);
+  background:rgba(57,255,136,.08);
+  color:#b7ffd2;
+}
+
+.heat-pill.heat-watched{
+  border-color:rgba(255,204,0,.35);
+  background:rgba(255,204,0,.10);
+  color:#ffe488;
+}
+
+.heat-pill.heat-hunted,
+.heat-pill.heat-wanted{
+  border-color:rgba(255,45,85,.46);
+  background:rgba(255,45,85,.14);
+  color:#ffb6c4;
+  box-shadow:0 0 18px rgba(255,45,85,.18);
+}
+
+.heat-panel{
+  position:relative;
+  overflow:hidden;
+}
+
+.heat-panel::before{
+  content:"";
+  position:absolute;
+  inset:auto -20% -70% -20%;
+  height:160px;
+  background:radial-gradient(circle,rgba(0,255,204,.12),transparent 62%);
+  pointer-events:none;
+}
+
+.heat-panel.hunted::before,
+.heat-panel.wanted::before{
+  background:radial-gradient(circle,rgba(255,45,85,.18),transparent 62%);
+}
+
+.heat-rules{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.heat-rule{
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.035);
+  border-radius:15px;
+  padding:11px;
+}
+
+.heat-rule b{
+  display:block;
+  color:#ffe488;
+  margin-bottom:6px;
+  font-size:14px;
+}
+
+.heat-rule span{
+  display:block;
+  color:#a9bdca;
+  font-size:12px;
+  line-height:1.45;
+}
+
+@media(max-width:640px){
+  .heat-rules{
+    grid-template-columns:1fr;
+  }
+}

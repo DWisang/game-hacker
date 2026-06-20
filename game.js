@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const STORAGE_KEY = "cybertrace_v5_sidebar_fixed";
+const STORAGE_KEY = "cybertrace_v8_heat_punishment";
 const $ = (id) => document.getElementById(id);
 
 const navItems = [
@@ -71,7 +71,9 @@ const achievements = [
   {id:"rich",name:"Crypto Stacker",desc:"Miliki ₿5.000.",check:(s)=>s.crypto>=5000},
   {id:"rank_root",name:"Root Phantom",desc:"Capai REP 1.100.",check:(s)=>s.rep>=1100},
   {id:"collector",name:"Tool Collector",desc:"Miliki 6 tool.",check:(s)=>Object.keys(s.owned).length>=6},
-  {id:"mini_master",name:"Mini Game Master",desc:"Menangkan 15 mini game.",check:(s)=>s.stats.minigames>=15}
+  {id:"mini_master",name:"Mini Game Master",desc:"Menangkan 15 mini game.",check:(s)=>s.stats.minigames>=15},
+  {id:"heat_survivor",name:"Heat Survivor",desc:"Selamat dari 3 Trace Lockdown.",check:(s)=>s.stats.lockdowns>=3},
+  {id:"wanted_runner",name:"Wanted Runner",desc:"Masuk status WANTED pertama kali.",check:(s)=>s.heatSystem && s.heatSystem.wanted}
 ];
 
 const defaultState = {
@@ -97,7 +99,8 @@ const defaultState = {
   dungeonBossDefeated:false,
   battle:null,
   lastDaily:null,
-  stats:{quests:0,battles:0,bosses:0,minigames:0,lockdowns:0},
+  stats:{quests:0,battles:0,bosses:0,minigames:0,lockdowns:0,raids:0,confiscated:0},
+  heatSystem:{wanted:false,wantedUntil:0,raidCooldownUntil:0,lastWarning:0},
   achievements:{},
   logs:["System initialized. Alias ZeroByte masuk ke Neon District."]
 };
@@ -205,6 +208,84 @@ function skillBonus(key){
   return state.skills[key] || 0;
 }
 
+function getHeatTier(){
+  if(state.heat < 30) return {name:"LOW", color:"green", desc:"Aman"};
+  if(state.heat < 60) return {name:"WATCHED", color:"yellow", desc:"Mulai dipantau"};
+  if(state.heat < 90) return {name:"HUNTED", color:"red", desc:"Diburu scanner"};
+  return {name:"WANTED", color:"red", desc:"Red alert"};
+}
+
+function nowMs(){
+  return Date.now();
+}
+
+function isWantedActive(){
+  if(!state.heatSystem) state.heatSystem = {wanted:false,wantedUntil:0,raidCooldownUntil:0,lastWarning:0};
+  if(state.heatSystem.wanted && nowMs() > state.heatSystem.wantedUntil){
+    state.heatSystem.wanted = false;
+    log("Status WANTED mereda. Scanner kehilangan jejak sementara.");
+    toast("WANTED berakhir. Heat masih tinggi, tetap hati-hati.");
+  }
+  return !!state.heatSystem.wanted;
+}
+
+function applyHighHeatPunishment(source="activity"){
+  if(!state.heatSystem) state.heatSystem = {wanted:false,wantedUntil:0,raidCooldownUntil:0,lastWarning:0};
+  const current = nowMs();
+
+  if(state.heat >= 90 && !state.heatSystem.wanted){
+    state.heatSystem.wanted = true;
+    state.heatSystem.wantedUntil = current + 3 * 60 * 1000;
+    state.heatSystem.raidCooldownUntil = current + 25000;
+    state.stats.raids = state.stats.raids || 0;
+    log("RED ALERT: Heat melewati 90%. Status WANTED aktif selama 3 menit.");
+    toast("RED ALERT! Heat > 90%. Status WANTED aktif.");
+    checkAchievements();
+  }
+
+  if(state.heat >= 90 && state.heatSystem.wanted && current > state.heatSystem.raidCooldownUntil){
+    const roll = rand(1,100);
+    state.heatSystem.raidCooldownUntil = current + rand(35000,65000);
+
+    if(roll <= 38){
+      state.stats.raids = (state.stats.raids || 0) + 1;
+      const fine = Math.min(state.crypto, rand(90,220) + state.level*45);
+      const energyLoss = Math.min(state.energy, rand(8,18));
+      state.crypto -= fine;
+      state.energy -= energyLoss;
+      state.stats.confiscated = (state.stats.confiscated || 0) + fine;
+      log(`TRACE RAID: Scanner menyita ₿${fine} dan Energy -${energyLoss}.`);
+      toast(`TRACE RAID! Crypto -₿${fine}, Energy -${energyLoss}.`);
+    }else if(roll <= 60){
+      state.rep = Math.max(0, state.rep - rand(8,22));
+      log("TRACE RAID: Reputasi turun karena jaringan kontak takut membantumu.");
+      toast("TRACE RAID! REP turun.");
+    }else{
+      log("TRACE RAID nyaris terjadi, tapi Proxy Chain menahan scanner.");
+      toast("Scanner lewat dekat. Kamu lolos tipis.");
+    }
+  }
+
+  if(state.heat >= 75 && current - (state.heatSystem.lastWarning || 0) > 45000){
+    state.heatSystem.lastWarning = current;
+    toast("Peringatan: Heat tinggi. Pakai Terminal clean atau rest.");
+  }
+}
+
+function getHeatPenalty(){
+  const wanted = isWantedActive();
+  if(state.heat >= 90 || wanted){
+    return {rewardMult:.72, energyExtra:1.35, heatExtra:1.35, failRepLoss:14, label:"WANTED penalty aktif"};
+  }
+  if(state.heat >= 75){
+    return {rewardMult:.86, energyExtra:1.18, heatExtra:1.2, failRepLoss:8, label:"Hunted penalty aktif"};
+  }
+  if(state.heat >= 60){
+    return {rewardMult:.94, energyExtra:1.08, heatExtra:1.1, failRepLoss:5, label:"Watched penalty ringan"};
+  }
+  return {rewardMult:1, energyExtra:1, heatExtra:1, failRepLoss:5, label:"Normal"};
+}
+
 function openSidebar(){
   const sidebar = $("sidebar");
   const overlay = $("overlay");
@@ -220,19 +301,32 @@ function closeSidebar(){
 }
 
 function addHeat(amount){
+  const penalty = getHeatPenalty();
   const reduction = skillBonus("stealth")*2 + totalStat("stealth")*.15;
-  state.heat = clamp(state.heat + Math.ceil(amount-reduction),0,100);
+  const finalAmount = Math.ceil(amount * penalty.heatExtra - reduction);
+  state.heat = clamp(state.heat + finalAmount,0,100);
+
   if(state.heat >= 100){
-    state.heat = 72;
+    state.heat = 78;
     state.stats.lockdowns++;
+    if(!state.heatSystem) state.heatSystem = {wanted:false,wantedUntil:0,raidCooldownUntil:0,lastWarning:0};
+    state.heatSystem.wanted = true;
+    state.heatSystem.wantedUntil = nowMs() + 4 * 60 * 1000;
+
     let fine = 220 + state.level*80;
     if(state.owned.tool_vault) fine = Math.floor(fine*.45);
     fine = Math.min(state.crypto,fine);
+
+    const energyLoss = Math.min(state.energy, Math.floor(state.maxEnergy * (state.owned.tool_vault ? .12 : .25)));
     state.crypto -= fine;
+    state.energy -= energyLoss;
     state.rep = Math.max(0,state.rep-(state.owned.tool_vault?10:30));
-    log(`TRACE LOCKDOWN! Crypto hilang ₿${fmt(fine)}.`);
-    toast("TRACE LOCKDOWN! Kamu berhasil kabur, tapi kena penalti.");
+
+    log(`TRACE LOCKDOWN! Crypto hilang ₿${fmt(fine)}, Energy -${energyLoss}.`);
+    toast("TRACE LOCKDOWN! Heat 100%. Crypto, energy, dan REP kena penalti.");
   }
+
+  applyHighHeatPunishment("heat");
 }
 
 function spendEnergy(amount){
@@ -335,7 +429,10 @@ function renderTop(){
   $("rankText").textContent = getRank();
   $("usernameText").textContent = "@" + (state.username || "zerobyte");
   $("avatarText").textContent = getAvatarInitial();
-  $("heatPill").textContent = `HEAT ${Math.floor(state.heat)}%`;
+  const tier = getHeatTier();
+  isWantedActive();
+  $("heatPill").textContent = `HEAT ${Math.floor(state.heat)}% · ${tier.name}`;
+  $("heatPill").className = `heat-pill heat-${tier.name.toLowerCase()}`;
   $("ticker").innerHTML = `&gt; ${state.alias}@neon · @${state.username || "zerobyte"} · Lv ${state.level} · REP ${fmt(state.rep)} · ₿${fmt(state.crypto)} · ${state.activeQuest ? "Quest: "+state.activeQuest.title : "No active quest"} <span class="scanline">_</span>`;
 }
 
@@ -380,6 +477,22 @@ function renderDashboard(){
       <div class="stat"><span>Reputation</span><span class="value">${fmt(state.rep)}</span></div>
       <div class="stat"><span>Skill Point</span><span class="value">${state.skillPoints}</span></div>
       <div class="stat"><span>Quest Clear</span><span class="value">${state.stats.quests}</span></div>
+    </div>
+
+    <div class="card span-12 heat-panel ${getHeatTier().name.toLowerCase()}">
+      <h2>Heat System</h2>
+      <p><b>Status:</b> ${getHeatTier().name} — ${getHeatTier().desc}. ${getHeatPenalty().label}.</p>
+      <div class="heat-rules">
+        <div class="heat-rule"><b>60%+</b><span>Energy & Heat cost mulai naik.</span></div>
+        <div class="heat-rule"><b>75%+</b><span>Reward turun dan scanner sering memberi warning.</span></div>
+        <div class="heat-rule"><b>90%+</b><span>WANTED aktif: random Trace Raid bisa menyita crypto, energy, atau REP.</span></div>
+        <div class="heat-rule"><b>100%</b><span>Trace Lockdown: penalti besar lalu Heat turun ke 78%.</span></div>
+      </div>
+      <div class="actions">
+        <button class="btn purple" type="button" data-go="terminal">Clean via Terminal</button>
+        <button class="btn warn" type="button" data-action="rest">Rest & Cooldown</button>
+        <button class="btn" type="button" data-action="deepClean">Deep Clean ₿250</button>
+      </div>
     </div>
 
     <div class="card span-6">
@@ -448,7 +561,7 @@ function questHTML(q,active=false){
       <span class="tag ${q.type==="High Risk" ? "red" : q.type==="Main" ? "yellow" : ""}">${q.type}</span>
     </div>
     <div class="stat"><span>Reward</span><span class="value">₿${fmt(q.reward.crypto)} · ${q.reward.exp} EXP · ${q.reward.rep} REP</span></div>
-    <div class="stat"><span>Cost / Risk</span><span>Energy ${q.energy} · Heat +${q.heat}</span></div>
+    <div class="stat"><span>Cost / Risk</span><span>Energy ${Math.ceil(q.energy * getHeatPenalty().energyExtra)} · Heat +${Math.ceil(q.heat * getHeatPenalty().heatExtra)} ${getHeatPenalty().rewardMult<1 ? "· Reward penalty" : ""}</span></div>
     <div class="actions">
       ${active
         ? `<button class="btn primary" type="button" data-action="startQuest">Start Random Mini Game</button><button class="btn danger" type="button" data-action="cancelQuest">Cancel</button>`
@@ -491,7 +604,10 @@ function startActiveQuest(){
     return;
   }
   const q = state.activeQuest;
-  if(!spendEnergy(q.energy)) return;
+  const penalty = getHeatPenalty();
+  const energyCost = Math.ceil(q.energy * penalty.energyExtra);
+  if(!spendEnergy(energyCost)) return;
+  if(penalty.energyExtra > 1) log(`Heat penalty: biaya energy quest naik menjadi ${energyCost}.`);
   miniGame = createRandomMiniGame(q);
   openMiniGame();
 }
@@ -548,18 +664,25 @@ function finishMiniGame(success,detail=""){
     log("MIRA membantu menyelamatkan mini game yang hampir gagal.");
   }
 
+  const penalty = getHeatPenalty();
   if(success){
-    gain(q.reward);
+    const adjustedReward = {
+      crypto: Math.floor((q.reward.crypto || 0) * penalty.rewardMult),
+      exp: Math.floor((q.reward.exp || 0) * penalty.rewardMult),
+      rep: Math.floor((q.reward.rep || 0) * penalty.rewardMult),
+      story: q.reward.story || 0
+    };
+    gain(adjustedReward);
     addHeat(Math.floor(q.heat*.45));
     state.stats.quests++;
     state.stats.minigames++;
-    log(`Quest sukses: ${q.title}. Mini game: ${miniGame.name}. ${detail}`);
+    log(`Quest sukses: ${q.title}. Mini game: ${miniGame.name}. ${detail} ${penalty.rewardMult<1 ? "Reward terkena heat penalty." : ""}`);
     state.activeQuest = null;
-    toast(`MISSION SUCCESS: ${miniGame.name}`);
+    toast(`MISSION SUCCESS: ${miniGame.name}${penalty.rewardMult<1 ? " · reward penalty" : ""}`);
   }else{
     addHeat(q.heat+8);
-    state.rep = Math.max(0,state.rep-5);
-    log(`Quest gagal: ${q.title}. Mini game: ${miniGame.name}. ${detail}`);
+    state.rep = Math.max(0,state.rep-penalty.failRepLoss);
+    log(`Quest gagal: ${q.title}. Mini game: ${miniGame.name}. ${detail} REP -${penalty.failRepLoss}.`);
     state.activeQuest = null;
     toast(`MISSION FAILED: ${miniGame.name}`);
   }
@@ -1005,7 +1128,7 @@ function renderTerminal(){
     <div class="card span-8">
       <h2>Neon Terminal</h2>
       <div class="terminal" id="termOut">
-        <p class="line green">CYBERTRACE NEON SHELL v7.0</p>
+        <p class="line green">CYBERTRACE NEON SHELL v8.0</p>
         <p class="line">Command fiktif: <span class="yellowtxt">scan</span>, <span class="yellowtxt">clean</span>, <span class="yellowtxt">trace</span>, <span class="yellowtxt">bounty</span>, <span class="yellowtxt">status</span>, <span class="yellowtxt">help</span></p>
         <p class="line bluetxt">Semua command hanya simulasi game.</p>
       </div>
@@ -1132,7 +1255,10 @@ function renderDungeon(){
 }
 
 function enterDungeon(){
-  if(!spendEnergy(18)) return;
+  const penalty = getHeatPenalty();
+  const cost = Math.ceil(18 * penalty.energyExtra);
+  if(!spendEnergy(cost)) return;
+  if(penalty.energyExtra > 1) log(`Heat penalty: biaya energy dungeon naik menjadi ${cost}.`);
   addHeat(8+state.dungeonFloor*2);
   const enemyIndex = state.dungeonFloor>=5 ? 3 : rand(0,Math.min(2,state.dungeonFloor));
   startBattle(clone(enemies[enemyIndex]),true);
@@ -1256,7 +1382,13 @@ function enemyTurn(){
 
 function winBattle(){
   const b = state.battle;
-  gain(b.enemy.reward);
+  const penalty = getHeatPenalty();
+  const adjustedReward = {
+    crypto: Math.floor((b.enemy.reward.crypto || 0) * penalty.rewardMult),
+    exp: Math.floor((b.enemy.reward.exp || 0) * penalty.rewardMult),
+    rep: Math.floor((b.enemy.reward.rep || 0) * penalty.rewardMult)
+  };
+  gain(adjustedReward);
   addHeat(b.fromDungeon?6:3);
   state.stats.battles++;
   log(`Battle menang: ${b.enemy.name}.`);
@@ -1453,6 +1585,24 @@ function renderLogs(){
   </div></div>`;
 }
 
+function deepClean(){
+  const cost = 250;
+  if(state.crypto < cost){
+    toast("Crypto tidak cukup untuk Deep Clean.");
+    return;
+  }
+  state.crypto -= cost;
+  const down = 28 + skillBonus("stealth")*3 + (state.owned.tool_cleaner ? 12 : 0);
+  state.heat = clamp(state.heat - down, 0, 100);
+  if(state.heatSystem){
+    state.heatSystem.wanted = false;
+    state.heatSystem.wantedUntil = 0;
+  }
+  log(`Deep Clean aktif. Bayar ₿${cost}, Heat -${down}, status WANTED dimatikan.`);
+  renderAll();
+  toast(`Deep Clean berhasil. Heat -${down}.`);
+}
+
 function randomEvent(){
   pick([
     ()=>{
@@ -1491,6 +1641,8 @@ function randomEvent(){
 }
 
 function renderAll(){
+  isWantedActive();
+  applyHighHeatPunishment("render");
   renderNav();
   renderTop();
   renderDashboard();
@@ -1563,6 +1715,7 @@ function bindGlobalEvents(){
     if(a==="rest") return rest();
     if(a==="daily") return claimDaily();
     if(a==="random") return randomEvent();
+    if(a==="deepClean") return deepClean();
     if(a==="startQuest") return startActiveQuest();
     if(a==="cancelQuest") return cancelQuest();
     if(a==="abortMini") return finishMiniGame(false,"Manual abort.");
