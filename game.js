@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const STORAGE_KEY = "cybertrace_v8_heat_punishment";
+const STORAGE_KEY = "cybertrace_v10_major_update";
 const $ = (id) => document.getElementById(id);
 
 const navItems = [
@@ -700,6 +700,7 @@ function closeModal(){
 }
 
 
+
 function miniGuideBox(label, text){
   return `<div class="guide-box"><b>${label}</b><span>${text}</span></div>`;
 }
@@ -710,34 +711,35 @@ function miniStatusCard(label, text){
 
 function miniThemeIcon(type){
   return ({
+    password:"🔐",
+    proxy:"🕸",
+    port:"🧱",
+    packet:"📡",
+    forensic:"📜",
+    exfil:"💾",
+    social:"💬",
     breach:"⌘",
-    word:"🔐",
-    node:"🛰",
-    pipe:"🔀",
-    signal:"📡",
-    memory:"🧠",
-    sorting:"🗂",
-    route:"🕸",
-    pattern:"🧩"
+    signal:"📶"
   })[type] || "✦";
 }
 
 function miniScaffold({title,badge,subtitle,goal,how,tip,statusHtml="",bodyHtml="",actionsHtml="",progress=0}){
-  const type = (miniGame && miniGame.type) ? miniGame.type : "breach";
+  const type = (miniGame && miniGame.type) ? miniGame.type : "password";
   const icon = miniThemeIcon(type);
   const safeProgress = clamp(progress || 0, 0, 100);
   return `${miniHeader(title,badge)}
-    <div class="mini-shell theme-${type}">
-      <div class="mini-hero mini-celebrate">
-        <div class="mini-hero-icon">${icon}</div>
-        <div class="mini-hero-copy">
+    <div class="mini-shell theme-${type} hacker-op">
+      <div class="op-hero">
+        <div class="op-icon">${icon}</div>
+        <div class="op-copy">
+          <div class="op-kicker">LIVE OPERATION · ${badge}</div>
           <h3>${title}</h3>
           <p>${subtitle}</p>
         </div>
       </div>
-      <div class="mini-progress-wrap">
-        <div class="mini-progress-top"><span>Mission Sync</span><span>${Math.round(safeProgress)}%</span></div>
-        <div class="mini-progress"><div class="mini-progress-fill" style="width:${safeProgress}%"></div></div>
+      <div class="op-progress-wrap">
+        <div class="op-progress-top"><span>Operation Sync</span><span>${Math.round(safeProgress)}%</span></div>
+        <div class="op-progress"><div class="op-progress-fill" style="width:${safeProgress}%"></div></div>
       </div>
       <div class="mini-guide">
         ${miniGuideBox("Tujuan", goal)}
@@ -745,415 +747,483 @@ function miniScaffold({title,badge,subtitle,goal,how,tip,statusHtml="",bodyHtml=
         ${miniGuideBox("Tips", tip)}
       </div>
       ${statusHtml ? `<div class="mini-status-grid">${statusHtml}</div>` : ""}
-      <div class="mini-board"><div class="mini-section-label">◈ Interactive Board</div>${bodyHtml}</div>
+      <div class="mini-board hacker-board">
+        <div class="mini-section-label">◈ Tactical Interface</div>
+        ${bodyHtml}
+      </div>
       ${actionsHtml ? `<div class="mini-actions">${actionsHtml}</div>` : ""}
     </div>`;
 }
 
-function createBreachSequence(q){
-  const tokens = ["A1","7X","B4","C9","D2","F0","9Z","K3","R8","N6"];
-  const len = clamp(2+q.difficulty,3,6);
-  const target = Array.from({length:len},()=>pick(tokens));
-  return {type:"breach",name:"Breach Sequence",target,grid:shuffle([...target,...Array.from({length:12},()=>pick(tokens))]).slice(0,12),selected:[]};
+function createRandomMiniGame(q){
+  return pick([
+    createPasswordBreach,
+    createProxyChain,
+    createPortIntrusion,
+    createPacketSniffer,
+    createLogForensics,
+    createDataExfiltration,
+    createSocialEngineering
+  ])(q);
 }
 
-function renderBreachMiniGame(){
+function openMiniGame(){
+  clearInterval(signalTimer);
+  clearTimeout(memoryTimer);
+  const map = {
+    password:renderPasswordBreach,
+    proxy:renderProxyChain,
+    port:renderPortIntrusion,
+    packet:renderPacketSniffer,
+    forensic:renderLogForensics,
+    exfil:renderDataExfiltration,
+    social:renderSocialEngineering
+  };
+  if(miniGame && map[miniGame.type]) map[miniGame.type]();
+  $("modal").classList.add("show");
+}
+
+/* 1. PASSWORD BREACH - Hacknet style terminal attack */
+function createPasswordBreach(q){
+  const users = [
+    {user:"root", pass:"BLACKICE", hint:"highest privilege"},
+    {user:"admin", pass:"NEONVAULT", hint:"system owner"},
+    {user:"ops", pass:"GHOSTKEY", hint:"operation account"},
+    {user:"backup", pass:"COLDSTORAGE", hint:"archive access"}
+  ];
+  const target = pick(users);
+  const methods = [
+    {id:"dictionary", name:"Dictionary Attack", clue:"Aman, dapat 1 hint tambahan", risk:8, power:55},
+    {id:"bruteforce", name:"Brute Force", clue:"Cepat tapi trace naik", risk:18, power:80},
+    {id:"phishing", name:"Social Clue", clue:"Minta clue dari data OSINT", risk:12, power:65}
+  ];
+  const candidates = shuffle([target.pass,"NEONROOT","SHADOWLOGIN","CACHEKEY","MIRRORPASS","ADMIN404","TOKENVAULT","DARKSHELL"]).slice(0,6);
+  if(!candidates.includes(target.pass)) candidates[rand(0,candidates.length-1)] = target.pass;
+  return {type:"password", name:"Password Breach", qDiff:q.difficulty, target, methods, candidates:shuffle(candidates), chosenMethod:null, attempts:3+Math.max(0,2-q.difficulty), clue:`Hint awal: ${target.hint}`, trace:0, maxTrace:40+q.difficulty*12};
+}
+
+function renderPasswordBreach(){
+  const progress = miniGame.chosenMethod ? 45 + (3-miniGame.attempts)*15 : 10;
   const status = [
-    miniStatusCard("Target", `${miniGame.target.length} kode`),
-    miniStatusCard("Progress", `${miniGame.selected.length}/${miniGame.target.length}`),
-    miniStatusCard("Mode", "Urut dari kiri ke kanan")
-  ].join("");
-  const body = `
-    <div class="mini-sequence"><b>Target</b><br>${miniGame.target.join(" → ")}</div>
-    <div class="mini-sequence"><b>Input Kamu</b><br>${miniGame.selected.length ? miniGame.selected.join(" → ") : "Belum ada input"}</div>
-    <div class="mini-grid cols-4">${miniGame.grid.map((t,i)=>`<button class="mini-cell" type="button" data-breach="${i}">${t}<small>Tap pilih</small></button>`).join("")}</div>`;
-  const actions = `<button class="btn warn" type="button" data-action="breachUndo">Undo</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
-  $("modalPanel").innerHTML = miniScaffold({
-    title:"Breach Sequence",
-    badge:"GRID CODE",
-    subtitle:"Susun kode persis seperti urutan target.",
-    goal:"Cocokkan semua kode pada urutan target.",
-    how:"Tap satu per satu kode di grid. Urutan tap harus sama persis dengan target di atas.",
-    tip:"Kalau salah 1 langkah saja, misi gagal. Gunakan tombol Undo kalau mau batal 1 langkah.",
-    statusHtml:status,
-    bodyHtml:body,
-    actionsHtml:actions,
-    progress:(miniGame.selected.length/miniGame.target.length)*100
-  });
-}
-
-function breachPick(i){
-  miniGame.selected.push(miniGame.grid[i]);
-  const pos = miniGame.selected.length-1;
-  if(miniGame.selected[pos] !== miniGame.target[pos]) return finishMiniGame(false,"Sequence salah.");
-  if(miniGame.selected.length === miniGame.target.length) return finishMiniGame(true,"Sequence cocok.");
-  renderBreachMiniGame();
-}
-
-function breachUndo(){
-  miniGame.selected.pop();
-  renderBreachMiniGame();
-}
-
-function createWordGuess(q){
-  const words = ["TRACE","CACHE","LOGIN","PROXY","TOKEN","ROUTE","PATCH","CLOUD","SHELL","CRYPT","VIRUS","QUERY"];
-  const answer = pick(words);
-  let list = shuffle(words).slice(0,8);
-  if(!list.includes(answer)) list[0] = answer;
-  return {type:"word",name:"Terminal Word Guess",words:shuffle(list),answer,attempts:4+Math.max(0,2-q.difficulty),hints:[]};
-}
-
-function renderWordGuessMiniGame(){
-  const status = [
+    miniStatusCard("Target User", miniGame.target.user),
     miniStatusCard("Attempts", `${miniGame.attempts} sisa`),
-    miniStatusCard("Panjang Kata", `${miniGame.answer.length} huruf`),
-    miniStatusCard("Hint", `${miniGame.hints.length} data`) 
+    miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`)
   ].join("");
-  const body = `
-    <div class="mini-grid cols-2">${miniGame.words.map(w=>`<button class="mini-cell" type="button" data-word="${w}">${w}<small>Pilih password</small></button>`).join("")}</div>
-    <div class="mini-history">${miniGame.hints.length ? miniGame.hints.map(h=>`<div class="mini-hint-line">${h}</div>`).join("") : `<div class="mini-hint-line">Belum ada hint. Pilih salah satu kata untuk memulai.</div>`}</div>`;
-  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  const methodPanel = !miniGame.chosenMethod ? `
+    <div class="fake-terminal">
+      <div class="term-title">target://auth/${miniGame.target.user}</div>
+      <p>> scan account --user ${miniGame.target.user}</p>
+      <p>> hash detected: ${"*".repeat(rand(8,14))}</p>
+      <p>> choose attack vector...</p>
+    </div>
+    <div class="op-card-grid">
+      ${miniGame.methods.map(m=>`<button class="op-card" type="button" data-pw-method="${m.id}">
+        <b>${m.name}</b><span>${m.clue}</span><small>Risk +${m.risk} · Power ${m.power}</small>
+      </button>`).join("")}
+    </div>` : `
+    <div class="fake-terminal">
+      <div class="term-title">attack://${miniGame.chosenMethod.name}</div>
+      <p>> ${miniGame.chosenMethod.name.toLowerCase().replaceAll(" ","_")} --target ${miniGame.target.user}</p>
+      <p>> ${miniGame.clue}</p>
+      <p>> select password candidate...</p>
+    </div>
+    <div class="op-card-grid">
+      ${miniGame.candidates.map(c=>`<button class="op-card password-card" type="button" data-pw-user="${c}">
+        <b>${c}</b><span>candidate password</span>
+      </button>`).join("")}
+    </div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort Operation</button>`;
   $("modalPanel").innerHTML = miniScaffold({
-    title:"Terminal Word Guess",
-    badge:"PASSWORD",
-    subtitle:"Cari password yang benar dari beberapa pilihan.",
-    goal:"Pilih 1 kata yang tepat sebelum attempt habis.",
-    how:"Tap satu kata. Kalau salah, kamu dapat hint berupa jumlah huruf yang tepat di posisi yang tepat.",
-    tip:"Gunakan hint untuk menyaring pilihan. Semakin besar angka match, semakin dekat ke jawaban.",
+    title:"Password Breach",
+    badge:"AUTH BYPASS",
+    subtitle:"Pilih attack vector, lalu tebak password dari candidate list.",
+    goal:"Dapatkan password user target tanpa trace penuh.",
+    how:"Pilih metode serangan. Setelah itu pilih candidate password yang paling cocok dengan hint.",
+    tip:"Brute Force kuat tapi risk tinggi. Social Clue sering memberi petunjuk lebih jelas.",
     statusHtml:status,
-    bodyHtml:body,
+    bodyHtml:methodPanel,
     actionsHtml:actions,
-    progress:((miniGame.hints.length)/(miniGame.hints.length+miniGame.attempts || 1))*100
+    progress
   });
 }
 
-function wordGuess(word){
-  if(word === miniGame.answer) return finishMiniGame(true,"Password benar.");
-  let match = 0;
-  for(let i=0;i<word.length;i++){
-    if(word[i] === miniGame.answer[i]) match++;
-  }
+function passwordMethod(id){
+  const method = miniGame.methods.find(m=>m.id===id);
+  if(!method) return;
+  miniGame.chosenMethod = method;
+  miniGame.trace += method.risk;
+  if(id==="dictionary") miniGame.clue += ` · Pola kata: ${miniGame.target.pass.slice(0,2)}***`;
+  if(id==="phishing") miniGame.clue += ` · OSINT leak: panjang ${miniGame.target.pass.length} huruf`;
+  if(id==="bruteforce") miniGame.clue += " · Brute output tidak memberi clue tambahan";
+  if(miniGame.trace>=miniGame.maxTrace) return finishMiniGame(false,"Trace penuh saat memilih attack vector.");
+  renderPasswordBreach();
+}
+
+function passwordGuess(pass){
+  if(pass===miniGame.target.pass) return finishMiniGame(true,`Credential ${miniGame.target.user}:${pass} berhasil didapat.`);
   miniGame.attempts--;
-  miniGame.hints.push(`${word}: ${match}/${miniGame.answer.length} huruf benar pada posisi yang benar`);
-  if(miniGame.attempts <= 0) return finishMiniGame(false,`Jawaban: ${miniGame.answer}.`);
-  renderWordGuessMiniGame();
+  miniGame.trace += rand(8,16);
+  if(miniGame.attempts<=0 || miniGame.trace>=miniGame.maxTrace) return finishMiniGame(false,`Auth breach gagal. Password benar: ${miniGame.target.pass}.`);
+  miniGame.clue += ` · ${pass} salah`;
+  renderPasswordBreach();
 }
 
-function createNodeCapture(q){
-  const path = ["HOME","PROXY","CACHE","FIREWALL","ROOT"];
-  const decoys = ["TRAP","HONEYPOT","TRACE","MIRROR","NOISE","DECOY"];
-  return {type:"node",name:"Node Capture",path,nodes:shuffle([...path.slice(1),...decoys.slice(0,4)]),step:1,trace:0,maxTrace:3+Math.max(0,3-q.difficulty)};
+/* 2. PROXY CHAIN BUILDER - Uplink / sonar inspired */
+function createProxyChain(q){
+  const safe = ["VPN-01","PROXY-SG","RELAY-TOR","MIRROR-ID","DARK-GW","CACHE-EU"];
+  const bad = ["HONEYPOT","TRACE-NODE","PUBLIC-WIFI","LOG-SINK","MALWARE-GW"];
+  const targetPath = shuffle(safe).slice(0,3+Math.min(2,q.difficulty));
+  return {type:"proxy", name:"Proxy Chain Builder", qDiff:q.difficulty, safe, bad, nodes:shuffle([...safe,...bad]).slice(0,9), targetPath, selected:[], trace:0, maxTrace:35+q.difficulty*12};
 }
 
-function renderNodeCaptureMiniGame(){
+function renderProxyChain(){
   const status = [
-    miniStatusCard("Progress", `${miniGame.step}/${miniGame.path.length-1} node`),
+    miniStatusCard("Chain", `${miniGame.selected.length}/${miniGame.targetPath.length}`),
     miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`),
-    miniStatusCard("Target Akhir", "ROOT")
+    miniStatusCard("Goal", "HOME → TARGET")
   ].join("");
-  const track = miniGame.path.map((node,idx)=>{
-    let cls = "locked";
-    if(idx < miniGame.step) cls = "done";
-    if(idx === miniGame.step) cls = "current";
-    return `<span class="mini-pill ${cls}">${node}</span>`;
-  }).join("");
+  const chosen = miniGame.selected.length ? miniGame.selected.join(" → ") : "HOME";
   const body = `
-    <div class="mini-node-track">${track}</div>
-    <div class="mini-sequence"><b>Node berikutnya</b><br>Pilih node yang benar untuk melanjutkan jalur menuju ROOT.</div>
-    <div class="mini-grid cols-3">${miniGame.nodes.map(n=>`<button class="mini-cell" type="button" data-node="${n}">${n}<small>Pilih node</small></button>`).join("")}</div>`;
+    <div class="proxy-radar-mini">
+      <div class="radar-ring-mini r1"></div><div class="radar-ring-mini r2"></div><div class="radar-ring-mini r3"></div>
+      <div class="radar-sweep-mini"></div>
+      ${miniGame.nodes.map((n,i)=>{
+        const angle = (i/miniGame.nodes.length)*Math.PI*2;
+        const r = 34 + (i%3)*18;
+        const x = 50 + Math.cos(angle)*r;
+        const y = 50 + Math.sin(angle)*r;
+        const picked = miniGame.selected.includes(n);
+        const danger = miniGame.bad.includes(n);
+        return `<button class="radar-dot-mini ${picked?"picked":""} ${danger?"danger":""}" style="left:${x}%;top:${y}%;" type="button" data-proxy-node="${n}"><span>${n}</span></button>`;
+      }).join("")}
+      <div class="radar-core-mini">HOME</div>
+    </div>
+    <div class="fake-terminal">
+      <p>> build_proxy_chain --target AUREX</p>
+      <p>> selected: ${chosen}</p>
+      <p>> recommended safe path length: ${miniGame.targetPath.length} hops</p>
+    </div>`;
+  const actions = `<button class="btn warn" type="button" data-action="proxyUndo">Undo Hop</button><button class="btn primary" type="button" data-action="proxySubmit">Deploy Chain</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Proxy Chain Builder",
+    badge:"NETWORK ROUTE",
+    subtitle:"Bangun jalur proxy aman di radar network.",
+    goal:"Pilih node aman sampai chain cukup panjang, lalu deploy.",
+    how:"Tap node di radar. Hindari HONEYPOT, TRACE-NODE, PUBLIC-WIFI, atau node jebakan lain.",
+    tip:"Node merah berisiko. Chain panjang mengurangi trace, tapi salah node bisa fatal.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions,
+    progress:(miniGame.selected.length/miniGame.targetPath.length)*100
+  });
+}
+
+function proxyPick(node){
+  if(miniGame.selected.includes(node)) return;
+  miniGame.selected.push(node);
+  if(miniGame.bad.includes(node)){
+    miniGame.trace += rand(12,22);
+    addHeat(3);
+  }else{
+    miniGame.trace += rand(2,7);
+  }
+  if(miniGame.trace>=miniGame.maxTrace) return finishMiniGame(false,"Proxy chain ketahuan scanner.");
+  renderProxyChain();
+}
+
+function proxyUndo(){
+  miniGame.selected.pop();
+  renderProxyChain();
+}
+
+function proxySubmit(){
+  const safeCount = miniGame.selected.filter(n=>!miniGame.bad.includes(n)).length;
+  const badCount = miniGame.selected.length-safeCount;
+  const ok = safeCount>=miniGame.targetPath.length && badCount===0;
+  finishMiniGame(ok, ok ? "Proxy chain bersih dan aktif." : "Chain mengandung node berbahaya atau terlalu pendek.");
+}
+
+/* 3. PORT INTRUSION - Firewall / port exploit */
+function createPortIntrusion(q){
+  const all = [
+    {port:22, svc:"SSH", exploit:"KEYSWAP", risk:12},
+    {port:80, svc:"HTTP", exploit:"WEB-SHELL", risk:8},
+    {port:443, svc:"HTTPS", exploit:"TLS-DOWN", risk:10},
+    {port:3306, svc:"MYSQL", exploit:"SQL-DUMP", risk:14},
+    {port:21, svc:"FTP", exploit:"ANON-FTP", risk:9}
+  ];
+  const open = shuffle(all).slice(0,3+Math.min(1,q.difficulty));
+  const target = pick(open);
+  return {type:"port", name:"Port Intrusion", qDiff:q.difficulty, ports:open, target, scanned:false, selectedPort:null, trace:0, maxTrace:42+q.difficulty*10};
+}
+
+function renderPortIntrusion(){
+  const status = [
+    miniStatusCard("Scan", miniGame.scanned?"Complete":"Needed"),
+    miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`),
+    miniStatusCard("Target", miniGame.selectedPort?`Port ${miniGame.selectedPort.port}`:"Unknown")
+  ].join("");
+  const body = `
+    <div class="firewall-rings">
+      <div class="fw-ring fw1"></div><div class="fw-ring fw2"></div><div class="fw-ring fw3"></div>
+      <div class="fw-core">${miniGame.scanned ? "OPEN PORTS FOUND" : "FIREWALL"}</div>
+    </div>
+    <div class="op-card-grid">
+      ${miniGame.ports.map(p=>`<button class="op-card port-card" type="button" ${miniGame.scanned?`data-port-scan="${p.port}"`:"disabled"}>
+        <b>${miniGame.scanned?`:${p.port}`:"???"}</b><span>${miniGame.scanned?p.svc:"SCAN REQUIRED"}</span><small>${miniGame.scanned?"tap pilih port":"jalankan scan dulu"}</small>
+      </button>`).join("")}
+    </div>
+    ${miniGame.selectedPort?`<div class="op-card-grid">
+      ${["KEYSWAP","WEB-SHELL","TLS-DOWN","SQL-DUMP","ANON-FTP"].map(ex=>`<button class="op-card" type="button" data-port-exploit="${ex}"><b>${ex}</b><span>exploit module</span></button>`).join("")}
+    </div>`:""}`;
+  const actions = `<button class="btn primary" type="button" data-action="portScan">Scan Ports</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Port Intrusion",
+    badge:"FIREWALL",
+    subtitle:"Scan port, pilih layanan, lalu gunakan exploit yang cocok.",
+    goal:"Masuk melalui port yang tepat dengan exploit yang sesuai.",
+    how:"Tekan Scan Ports, pilih port, lalu pilih module exploit berdasarkan service.",
+    tip:"SSH biasanya KEYSWAP, HTTP WEB-SHELL, HTTPS TLS-DOWN, MYSQL SQL-DUMP, FTP ANON-FTP.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions,
+    progress: miniGame.selectedPort ? 68 : miniGame.scanned ? 35 : 5
+  });
+}
+
+function portScan(){
+  miniGame.scanned = true;
+  miniGame.trace += rand(4,10);
+  renderPortIntrusion();
+}
+
+function portSelect(port){
+  miniGame.selectedPort = miniGame.ports.find(p=>String(p.port)===String(port));
+  miniGame.trace += rand(2,8);
+  renderPortIntrusion();
+}
+
+function portExploit(ex){
+  const ok = miniGame.selectedPort && ex===miniGame.selectedPort.exploit;
+  miniGame.trace += ok ? miniGame.selectedPort.risk : rand(16,26);
+  if(miniGame.trace>=miniGame.maxTrace) return finishMiniGame(false,"Firewall trace penuh.");
+  finishMiniGame(ok, ok ? `Exploit ${ex} berhasil pada port ${miniGame.selectedPort.port}.` : "Exploit tidak cocok dengan service.");
+}
+
+/* 4. PACKET SNIFFER */
+function createPacketSniffer(q){
+  const packets = ["PING","AUTH","CACHE","IMG","TOKEN","ROOT","MALWARE","LOG","SESSION","DNS"];
+  const targets = shuffle(["TOKEN","ROOT","SESSION"]).slice(0,2+Math.min(1,q.difficulty));
+  const stream = Array.from({length:10+q.difficulty*2},()=>pick(packets));
+  targets.forEach(t=>stream[rand(0,stream.length-1)]=t);
+  return {type:"packet", name:"Packet Sniffer", qDiff:q.difficulty, stream, targets, picked:[], trace:0, maxTrace:45+q.difficulty*10};
+}
+
+function renderPacketSniffer(){
+  const status = [
+    miniStatusCard("Target Packet", miniGame.targets.join(", ")),
+    miniStatusCard("Captured", `${miniGame.picked.length}/${miniGame.targets.length}`),
+    miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`)
+  ].join("");
+  const body = `
+    <div class="packet-stream">
+      ${miniGame.stream.map((p,i)=>`<button class="packet-chip ${miniGame.picked.includes(i)?"picked":""}" type="button" data-sniff-packet="${i}"><b>${p}</b><small>#${String(i+1).padStart(2,"0")}</small></button>`).join("")}
+    </div>
+    <div class="fake-terminal"><p>> sniff --interface neon0</p><p>> capture target packets only: ${miniGame.targets.join(", ")}</p><p>> avoid noise packets to keep trace low.</p></div>`;
+  const actions = `<button class="btn primary" type="button" data-action="sniffSubmit">Extract Packets</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Packet Sniffer",
+    badge:"TRAFFIC",
+    subtitle:"Tangkap packet penting dari data stream.",
+    goal:"Pilih packet target saja, lalu extract.",
+    how:"Tap packet yang masuk kategori target. Jangan terlalu banyak memilih noise.",
+    tip:"TOKEN, ROOT, dan SESSION biasanya bernilai tinggi. Packet lain bisa menaikkan trace.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions,
+    progress:(miniGame.picked.length/miniGame.targets.length)*100
+  });
+}
+
+function sniffPick(i){
+  i = Number(i);
+  if(miniGame.picked.includes(i)) miniGame.picked = miniGame.picked.filter(x=>x!==i);
+  else miniGame.picked.push(i);
+  renderPacketSniffer();
+}
+
+function sniffSubmit(){
+  const selected = miniGame.picked.map(i=>miniGame.stream[i]);
+  const hit = miniGame.targets.every(t=>selected.includes(t));
+  const noise = selected.filter(p=>!miniGame.targets.includes(p)).length;
+  miniGame.trace += noise*10;
+  if(miniGame.trace>=miniGame.maxTrace) return finishMiniGame(false,"Terlalu banyak noise packet.");
+  finishMiniGame(hit && noise<=1, hit ? "Packet penting berhasil diekstrak." : "Packet target belum lengkap.");
+}
+
+/* 5. LOG FORENSICS */
+function createLogForensics(q){
+  const cases = [
+    {q:"IP mana yang melakukan privilege escalation?", answer:"10.0.4.66", logs:["09:12 172.16.1.9 login failed","09:13 10.0.4.66 sudo exploit","09:14 10.0.4.66 root shell","09:15 192.168.0.2 ping"]},
+    {q:"File mana yang diubah setelah login admin?", answer:"vault.db", logs:["18:02 admin login success","18:04 config.ini read","18:06 vault.db modified","18:08 session closed"]},
+    {q:"Event mana yang memicu alarm?", answer:"root shell", logs:["01:22 guest login","01:23 token read","01:24 root shell","01:25 alarm triggered"]}
+  ];
+  const c = pick(cases);
+  return {type:"forensic", name:"Log Forensics", qDiff:q.difficulty, case:c, trace:0, maxTrace:35+q.difficulty*8};
+}
+
+function renderLogForensics(){
+  const options = shuffle([...new Set([...miniGame.case.logs.flatMap(l=>l.split(" ")).filter(x=>x.length>3), miniGame.case.answer])]).slice(0,7);
+  if(!options.includes(miniGame.case.answer)) options[0]=miniGame.case.answer;
+  miniGame.options = shuffle(options);
+  const status = [
+    miniStatusCard("Evidence", `${miniGame.case.logs.length} logs`),
+    miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`),
+    miniStatusCard("Mode", "Investigation")
+  ].join("");
+  const body = `
+    <div class="log-viewer">
+      ${miniGame.case.logs.map(l=>`<div><span>SYSLOG</span>${l}</div>`).join("")}
+    </div>
+    <div class="mini-sequence"><b>Pertanyaan</b><br>${miniGame.case.q}</div>
+    <div class="op-card-grid">${miniGame.options.map(o=>`<button class="op-card" type="button" data-log-answer="${o}"><b>${o}</b><span>evidence answer</span></button>`).join("")}</div>`;
   const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
   $("modalPanel").innerHTML = miniScaffold({
-    title:"Node Capture",
-    badge:"NETWORK",
-    subtitle:"Cari node yang benar tanpa memicu trace berlebihan.",
-    goal:"Ikuti jalur yang benar hingga ROOT.",
-    how:"Tap node yang menurutmu adalah node berikutnya dalam jalur aman.",
-    tip:"Salah pilih akan menambah Trace. Kalau Trace penuh, misi gagal.",
-    statusHtml:status,
-    bodyHtml:body,
-    actionsHtml:actions,
-    progress:(miniGame.step/(miniGame.path.length-1))*100
-  });
-}
-
-function nodePick(node){
-  if(node === miniGame.path[miniGame.step]){
-    miniGame.step++;
-    if(miniGame.step >= miniGame.path.length) return finishMiniGame(true,"Root node berhasil dikuasai.");
-  }else{
-    miniGame.trace++;
-    addHeat(2);
-    if(miniGame.trace >= miniGame.maxTrace) return finishMiniGame(false,"Trace mencapai HOME node.");
-  }
-  renderNodeCaptureMiniGame();
-}
-
-function createPipeFlow(q){
-  const pieces = ["─","│","┌","┐","└","┘"];
-  const answer = ["─","┐","│","┘"];
-  return {type:"pipe",name:"Pipe Data Flow",pieces,answer,current:shuffle(pieces).slice(0,4),moves:8+Math.max(0,3-q.difficulty)};
-}
-
-function renderPipeFlowMiniGame(){
-  const correctCount = miniGame.current.filter((p,i)=>p===miniGame.answer[i]).length;
-  const status = [
-    miniStatusCard("Moves", `${miniGame.moves}`),
-    miniStatusCard("Benar", `${correctCount}/4 posisi`),
-    miniStatusCard("Tujuan", "Samakan 4 ubin")
-  ].join("");
-  const targetRow = miniGame.answer.map((p,i)=>`<div class="mini-flow-card"><span class="slot-no">Target ${i+1}</span><div class="pipe-big">${p}</div></div>`).join("");
-  const currentRow = miniGame.current.map((p,i)=>`<button class="mini-pipe-card ${p===miniGame.answer[i] ? "good" : "bad"}" type="button" data-pipe="${i}"><span class="slot-no">Tile ${i+1}</span><div class="pipe-big">${p}</div><small>${p===miniGame.answer[i] ? "Sudah cocok" : "Tap untuk rotate"}</small></button>`).join("");
-  const body = `
-    <div class="mini-sequence"><b>Cara baca</b><br>Baris <b>Target</b> adalah susunan akhir. Baris <b>Tile Kamu</b> adalah ubin yang bisa kamu tap untuk diputar. Setiap tap akan mengganti bentuk ubin.</div>
-    <div class="mini-legend">Urutan rotate: ─ → │ → ┌ → ┐ → └ → ┘ → kembali ke ─</div>
-    <div class="mini-flow-row">${targetRow}</div>
-    <div class="mini-flow-grid">${currentRow}</div>`;
-  const actions = `<button class="btn primary" type="button" data-action="pipeSubmit">Submit Flow</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
-  $("modalPanel").innerHTML = miniScaffold({
-    title:"Pipe Data Flow",
-    badge:"FLOW",
-    subtitle:"Susun jalur data dengan memutar 4 ubin sampai sama dengan target.",
-    goal:"Buat 4 tile kamu sama persis dengan 4 tile target dari kiri ke kanan.",
-    how:"Tap tile pada baris bawah untuk rotate bentuknya. Cocokkan semua tile, lalu tekan Submit Flow.",
-    tip:"Kalau kartu berwarna hijau berarti posisi itu sudah benar. Fokus ubah yang merah saja.",
-    statusHtml:status,
-    bodyHtml:body,
-    actionsHtml:actions,
-    progress:(correctCount/4)*100
-  });
-}
-
-function pipeRotate(i){
-  const idx = miniGame.pieces.indexOf(miniGame.current[i]);
-  miniGame.current[i] = miniGame.pieces[(idx+1)%miniGame.pieces.length];
-  miniGame.moves--;
-  if(miniGame.moves < 0) return finishMiniGame(false,"Moves habis.");
-  renderPipeFlowMiniGame();
-}
-
-function pipeSubmit(){
-  const ok = miniGame.current.join("") === miniGame.answer.join("");
-  finishMiniGame(ok, ok ? "Data flow tersambung." : "Flow masih rusak.");
-}
-
-function createSignalTiming(q){
-  const zoneStart = rand(25,60);
-  const base = state.owned.tool_signal ? 34 : 28;
-  const zoneSize = clamp(base-q.difficulty*4+skillBonus("ai"),12,36);
-  return {type:"signal",name:"Signal Timing",cursor:0,dir:1,zoneStart,zoneEnd:zoneStart+zoneSize,speed:4+q.difficulty};
-}
-
-function renderSignalTimingMiniGame(){
-  const zoneSize = Math.round(miniGame.zoneEnd-miniGame.zoneStart);
-  const status = [
-    miniStatusCard("Zona Aman", `${zoneSize}%`),
-    miniStatusCard("Kecepatan", `${miniGame.speed}`),
-    miniStatusCard("Aksi", "Tekan STOP")
-  ].join("");
-  const body = `
-    <div class="mini-sequence"><b>Instruksi</b><br>Tunggu garis putih bergerak masuk ke area hijau, lalu tap tombol STOP.</div>
-    <div class="signal-box"><div class="signal-zone" style="left:${miniGame.zoneStart}%;width:${miniGame.zoneEnd-miniGame.zoneStart}%"></div><div class="signal-cursor" id="signalCursor"></div></div>`;
-  const actions = `<button class="btn primary" type="button" data-action="signalStop">STOP</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
-  $("modalPanel").innerHTML = miniScaffold({
-    title:"Signal Timing",
-    badge:"QUICK HACK",
-    subtitle:"Uji timing. Hentikan sinyal tepat di area aman.",
-    goal:"Tekan STOP saat garis putih ada di zona hijau.",
-    how:"Lihat gerakan garis putih dari kiri ke kanan dan sebaliknya. Tap STOP pada waktu yang pas.",
-    tip:"Jangan panik. Zona hijau adalah area aman. Tool Signal Stabilizer membuat zona lebih lebar.",
+    title:"Log Forensics",
+    badge:"EVIDENCE",
+    subtitle:"Analisis log dan cari bukti yang benar.",
+    goal:"Jawab pertanyaan berdasarkan log yang tampil.",
+    how:"Baca log baris demi baris, lalu pilih jawaban yang paling cocok.",
+    tip:"Cari hubungan sebab-akibat: login, file modified, root shell, atau alarm.",
     statusHtml:status,
     bodyHtml:body,
     actionsHtml:actions,
     progress:50
   });
-  clearInterval(signalTimer);
-  signalTimer = setInterval(()=>{
-    miniGame.cursor += miniGame.dir*miniGame.speed;
-    if(miniGame.cursor >= 100){miniGame.cursor=100;miniGame.dir=-1;}
-    if(miniGame.cursor <= 0){miniGame.cursor=0;miniGame.dir=1;}
-    const cur = $("signalCursor");
-    if(cur) cur.style.left = miniGame.cursor + "%";
-  },35);
 }
 
-function signalStop(){
-  const ok = miniGame.cursor >= miniGame.zoneStart && miniGame.cursor <= miniGame.zoneEnd;
-  finishMiniGame(ok, ok ? "Signal tepat." : "Signal miss.");
+function logAnswer(ans){
+  finishMiniGame(ans===miniGame.case.answer, ans===miniGame.case.answer ? "Analisis log akurat." : "Analisis log salah.");
 }
 
-function createMemoryPacket(q){
-  const symbols = ["◇","○","△","□","✦","⬡"];
-  const len = clamp(3+q.difficulty,3,7);
-  return {type:"memory",name:"Memory Packet",symbols,sequence:Array.from({length:len},()=>pick(symbols)),input:[],hidden:false,revealMs:1800+skillBonus("ai")*250};
+/* 6. DATA EXFILTRATION */
+function createDataExfiltration(q){
+  const files = [
+    {name:"admin_keys.enc", value:5, trap:false, size:2},
+    {name:"finance_dump.csv", value:4, trap:false, size:3},
+    {name:"employee_photo.zip", value:1, trap:false, size:2},
+    {name:"honeypot_payload.exe", value:0, trap:true, size:2},
+    {name:"token_backup.json", value:4, trap:false, size:1},
+    {name:"trace_marker.log", value:0, trap:true, size:1}
+  ];
+  return {type:"exfil", name:"Data Exfiltration", qDiff:q.difficulty, files:shuffle(files), picked:[], capacity:5+Math.max(0,2-q.difficulty), trace:0, maxTrace:45+q.difficulty*10};
 }
 
-function renderMemoryPacketMiniGame(){
+function renderDataExfiltration(){
+  const size = miniGame.picked.reduce((a,i)=>a+miniGame.files[i].size,0);
+  const value = miniGame.picked.reduce((a,i)=>a+miniGame.files[i].value,0);
   const status = [
-    miniStatusCard("Panjang", `${miniGame.sequence.length} simbol`),
-    miniStatusCard("Progress", `${miniGame.input.length}/${miniGame.sequence.length}`),
-    miniStatusCard("Status", miniGame.hidden ? "Saatnya input" : "Hafalkan dulu")
+    miniStatusCard("Storage", `${size}/${miniGame.capacity} GB`),
+    miniStatusCard("Value", `${value} pts`),
+    miniStatusCard("Trace", `${miniGame.trace}/${miniGame.maxTrace}`)
   ].join("");
   const body = `
-    <div class="mini-sequence"><b>${miniGame.hidden ? "Sequence disembunyikan" : "Hafalkan sequence berikut"}</b><br>${miniGame.hidden ? "Masukkan ulang urutan simbol sesuai yang tadi muncul." : miniGame.sequence.join(" → ")}</div>
-    <div class="mini-sequence"><b>Input Kamu</b><br>${miniGame.input.length ? miniGame.input.join(" → ") : "Belum ada input"}</div>
-    <div class="mini-grid cols-3 mini-memory-grid">${miniGame.symbols.map(s=>`<button class="mini-cell" type="button" ${miniGame.hidden ? `data-memory="${s}"` : "disabled"}>${s}<small>${miniGame.hidden ? "Tap simbol" : "Tunggu..."}</small></button>`).join("")}</div>`;
-  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+    <div class="file-grid">
+      ${miniGame.files.map((f,i)=>`<button class="file-card ${miniGame.picked.includes(i)?"picked":""} ${f.trap?"trap":""}" type="button" data-file-pick="${i}">
+        <b>${f.name}</b><span>${f.size} GB · value ${f.value}</span><small>${f.trap?"suspicious file":"data file"}</small>
+      </button>`).join("")}
+    </div>
+    <div class="fake-terminal"><p>> exfil --max ${miniGame.capacity}GB</p><p>> avoid honeypot and trace marker files.</p></div>`;
+  const actions = `<button class="btn primary" type="button" data-action="exfilSubmit">Extract Selected</button><button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
   $("modalPanel").innerHTML = miniScaffold({
-    title:"Memory Packet",
-    badge:"DECRYPT",
-    subtitle:"Tes memori untuk membaca paket terenkripsi.",
-    goal:"Ingat lalu ulangi urutan simbol yang muncul.",
-    how:"Pertama hafalkan sequence. Setelah hilang, tap simbol satu per satu sesuai urutan aslinya.",
-    tip:"Fokus ke urutan, bukan cuma simbolnya. Panjang sequence tergantung tingkat kesulitan.",
+    title:"Data Exfiltration",
+    badge:"LOOT",
+    subtitle:"Pilih file bernilai tinggi tanpa melewati kapasitas dan tanpa jebakan.",
+    goal:"Kumpulkan value minimal 6 tanpa mengambil file trap.",
+    how:"Tap file untuk pilih/batal. Perhatikan ukuran storage dan label suspicious.",
+    tip:"File bernama honeypot atau trace biasanya jebakan walau tampak penting.",
     statusHtml:status,
     bodyHtml:body,
     actionsHtml:actions,
-    progress:(miniGame.input.length/miniGame.sequence.length)*100
+    progress:Math.min(100,(value/6)*100)
   });
-  if(!miniGame.hidden){
-    clearTimeout(memoryTimer);
-    memoryTimer = setTimeout(()=>{
-      if(miniGame){
-        miniGame.hidden = true;
-        renderMemoryPacketMiniGame();
-      }
-    },miniGame.revealMs);
+}
+
+function filePick(i){
+  i=Number(i);
+  if(miniGame.picked.includes(i)) miniGame.picked=miniGame.picked.filter(x=>x!==i);
+  else miniGame.picked.push(i);
+  renderDataExfiltration();
+}
+
+function exfilSubmit(){
+  const selected = miniGame.picked.map(i=>miniGame.files[i]);
+  const size = selected.reduce((a,f)=>a+f.size,0);
+  const value = selected.reduce((a,f)=>a+f.value,0);
+  const trap = selected.some(f=>f.trap);
+  if(size>miniGame.capacity) return finishMiniGame(false,"Storage penuh, transfer terdeteksi.");
+  if(trap) return finishMiniGame(false,"File jebakan ikut diekstrak.");
+  finishMiniGame(value>=6, value>=6 ? "Data bernilai berhasil diekstrak." : "Data yang diambil kurang bernilai.");
+}
+
+/* 7. SOCIAL ENGINEERING CHAT */
+function createSocialEngineering(q){
+  const scenario = pick([
+    {npc:"Helpdesk Rina", goal:"server name", answer:"Tanya prosedur maintenance", bad:"Minta password langsung", clue:"Rina takut melanggar SOP."},
+    {npc:"Admin Bayu", goal:"OTP clue", answer:"Pura-pura audit keamanan", bad:"Ancaman pemecatan", clue:"Bayu percaya audit resmi."},
+    {npc:"Intern Dewa", goal:"email internal", answer:"Bangun obrolan santai", bad:"Kirim link mencurigakan", clue:"Dewa suka ngobrol dan mudah panik."}
+  ]);
+  return {type:"social", name:"Social Engineering Chat", qDiff:q.difficulty, scenario, trust:45, suspicion:10, step:0};
+}
+
+function renderSocialEngineering(){
+  const status = [
+    miniStatusCard("Trust", `${miniGame.trust}%`),
+    miniStatusCard("Suspicion", `${miniGame.suspicion}%`),
+    miniStatusCard("Goal", miniGame.scenario.goal)
+  ].join("");
+  const body = `
+    <div class="chat-window">
+      <div class="chat-msg npc"><b>${miniGame.scenario.npc}</b><span>Ada yang bisa saya bantu?</span></div>
+      <div class="chat-msg sys"><span>Intel clue: ${miniGame.scenario.clue}</span></div>
+      ${miniGame.step>0?`<div class="chat-msg player"><span>${miniGame.lastReply}</span></div>`:""}
+    </div>
+    <div class="op-card-grid">
+      <button class="op-card" type="button" data-social-reply="${miniGame.scenario.answer}"><b>${miniGame.scenario.answer}</b><span>low suspicion approach</span></button>
+      <button class="op-card" type="button" data-social-reply="Buat alasan teknis palsu"><b>Buat alasan teknis palsu</b><span>medium risk</span></button>
+      <button class="op-card danger-card" type="button" data-social-reply="${miniGame.scenario.bad}"><b>${miniGame.scenario.bad}</b><span>high risk</span></button>
+    </div>`;
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+  $("modalPanel").innerHTML = miniScaffold({
+    title:"Social Engineering Chat",
+    badge:"OSINT",
+    subtitle:"Dapatkan info dari NPC tanpa membuat mereka curiga.",
+    goal:`Dapatkan ${miniGame.scenario.goal}.`,
+    how:"Pilih respon chat yang membangun trust dan tidak terlalu agresif.",
+    tip:"Jangan minta password langsung. Gunakan konteks audit atau obrolan santai.",
+    statusHtml:status,
+    bodyHtml:body,
+    actionsHtml:actions,
+    progress:miniGame.trust
+  });
+}
+
+function socialReply(reply){
+  miniGame.lastReply = reply;
+  miniGame.step++;
+  if(reply===miniGame.scenario.answer){
+    miniGame.trust += 35;
+    miniGame.suspicion += 5;
+  }else if(reply===miniGame.scenario.bad){
+    miniGame.trust -= 20;
+    miniGame.suspicion += 50;
+  }else{
+    miniGame.trust += 10;
+    miniGame.suspicion += 20;
   }
-}
-
-function memoryPick(symbol){
-  miniGame.input.push(symbol);
-  const pos = miniGame.input.length-1;
-  if(miniGame.input[pos] !== miniGame.sequence[pos]) return finishMiniGame(false,"Sequence memory salah.");
-  if(miniGame.input.length === miniGame.sequence.length) return finishMiniGame(true,"Packet berhasil didekripsi.");
-  renderMemoryPacketMiniGame();
-}
-
-function createDataSorting(q){
-  const packets = [
-    {name:"MALWARE",cat:"Quarantine"},
-    {name:"TOKEN",cat:"Vault"},
-    {name:"LOG",cat:"Archive"},
-    {name:"CACHE",cat:"Clean"},
-    {name:"ROOTKEY",cat:"Vault"},
-    {name:"SPAM",cat:"Quarantine"}
-  ];
-  return {type:"sorting",name:"Data Sorting",packets:shuffle(packets).slice(0,clamp(3+q.difficulty,3,6)),index:0,mistakes:0,maxMistakes:2};
-}
-
-function renderDataSortingMiniGame(){
-  const p = miniGame.packets[miniGame.index];
-  const status = [
-    miniStatusCard("Progress", `${miniGame.index+1}/${miniGame.packets.length}`),
-    miniStatusCard("Mistake", `${miniGame.mistakes}/${miniGame.maxMistakes}`),
-    miniStatusCard("Packet", p.name)
-  ].join("");
-  const body = `
-    <div class="mini-sorting-target">${p.name}</div>
-    <div class="mini-sequence"><b>Pilih kategori yang benar</b><br>Kirim packet <b>${p.name}</b> ke folder yang sesuai.</div>
-    <div class="mini-grid cols-2">${["Quarantine","Vault","Archive","Clean"].map(cat=>`<button class="mini-cell mini-answer-option" type="button" data-sort="${cat}"><div><b>${cat}</b><small>Tap untuk kirim ke sini</small></div></button>`).join("")}</div>`;
-  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
-  $("modalPanel").innerHTML = miniScaffold({
-    title:"Data Sorting",
-    badge:"CLEANUP",
-    subtitle:"Sortir data ke folder yang tepat.",
-    goal:"Pilih kategori yang cocok untuk setiap packet.",
-    how:"Lihat nama packet di atas, lalu tap salah satu kategori di bawahnya.",
-    tip:"Terlalu banyak salah kategori akan membuat misi gagal.",
-    statusHtml:status,
-    bodyHtml:body,
-    actionsHtml:actions,
-    progress:(miniGame.index/miniGame.packets.length)*100
-  });
-}
-
-function sortPick(cat){
-  const p = miniGame.packets[miniGame.index];
-  if(cat !== p.cat){
-    miniGame.mistakes++;
-    addHeat(2);
-    if(miniGame.mistakes > miniGame.maxMistakes) return finishMiniGame(false,"Terlalu banyak paket salah kategori.");
-  }
-  miniGame.index++;
-  if(miniGame.index >= miniGame.packets.length) return finishMiniGame(true,"Semua paket disortir.");
-  renderDataSortingMiniGame();
-}
-
-function createStealthRoute(q){
-  const routes = [
-    {name:"HOME → PROXY → DARK RELAY → TARGET",safe:true,risk:"Low"},
-    {name:"HOME → PUBLIC WIFI → TARGET",safe:false,risk:"High"},
-    {name:"HOME → TRACE NODE → TARGET",safe:false,risk:"Critical"},
-    {name:"HOME → CACHE → MIRROR → TARGET",safe:true,risk:"Medium"}
-  ];
-  const answer = pick(routes.filter(r=>r.safe)).name;
-  return {type:"route",name:"Stealth Route",routes:shuffle(routes),answer};
-}
-
-function renderStealthRouteMiniGame(){
-  const status = [
-    miniStatusCard("Pilihan", `${miniGame.routes.length} route`),
-    miniStatusCard("Tujuan", "Capai TARGET"),
-    miniStatusCard("Fokus", "Cari jalur aman")
-  ].join("");
-  const body = `<div class="mini-grid">${miniGame.routes.map(r=>`<button class="mini-cell mini-route-option" type="button" data-route="${encodeURIComponent(r.name)}"><div><b>${r.name}</b><small>Risk: ${r.risk}</small></div></button>`).join("")}</div>`;
-  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
-  $("modalPanel").innerHTML = miniScaffold({
-    title:"Stealth Route",
-    badge:"PATHFINDING",
-    subtitle:"Pilih rute infiltrasi paling aman.",
-    goal:"Pilih satu route yang paling aman menuju TARGET.",
-    how:"Baca setiap jalur dan level risikonya, lalu tap route yang menurutmu paling aman.",
-    tip:"Route dengan node berbahaya seperti PUBLIC WIFI atau TRACE NODE biasanya lebih berisiko.",
-    statusHtml:status,
-    bodyHtml:body,
-    actionsHtml:actions,
-    progress:30
-  });
-}
-
-function routePick(encoded){
-  const route = decodeURIComponent(encoded);
-  finishMiniGame(route === miniGame.answer, route === miniGame.answer ? "Route aman dipilih." : "Route terkena scanner.");
-}
-
-function createFirewallPattern(){
-  const patterns = [
-    {prompt:"2, 5, 10, 17, 26, ?",answer:"37",options:["32","35","37","42"]},
-    {prompt:"4, 8, 12, 16, ?",answer:"20",options:["18","20","22","24"]},
-    {prompt:"1, 1, 2, 3, 5, ?",answer:"8",options:["7","8","9","10"]},
-    {prompt:"A1 → B2 → C3 → ?",answer:"D4",options:["C4","D4","E3","B4"]}
-  ];
-  const p = pick(patterns);
-  return {type:"pattern",name:"Firewall Pattern",prompt:p.prompt,answer:p.answer,options:shuffle(p.options)};
-}
-
-function renderFirewallPatternMiniGame(){
-  const status = [
-    miniStatusCard("Tipe", "Logic Pattern"),
-    miniStatusCard("Pilihan", `${miniGame.options.length} jawaban`),
-    miniStatusCard("Target", "Cari lanjutan pola")
-  ].join("");
-  const body = `
-    <div class="mini-sequence"><b>Pola Firewall</b><br>${miniGame.prompt}</div>
-    <div class="mini-answer-grid">${miniGame.options.map(o=>`<button class="mini-cell mini-answer-option" type="button" data-pattern="${o}"><div><b>${o}</b><small>Pilih jawaban</small></div></button>`).join("")}</div>`;
-  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
-  $("modalPanel").innerHTML = miniScaffold({
-    title:"Firewall Pattern",
-    badge:"LOGIC",
-    subtitle:"Pecahkan pola logika untuk menembus firewall.",
-    goal:"Pilih jawaban yang paling tepat untuk melanjutkan pola.",
-    how:"Amati urutan angka atau simbol, cari pola perubahannya, lalu pilih jawaban yang cocok.",
-    tip:"Coba lihat selisih angka, urutan huruf, atau pola penomoran untuk menemukan jawaban.",
-    statusHtml:status,
-    bodyHtml:body,
-    actionsHtml:actions,
-    progress:35
-  });
-}
-
-function patternPick(o){
-  finishMiniGame(o === miniGame.answer, o === miniGame.answer ? "Pattern benar." : "Pattern salah.");
+  if(miniGame.suspicion>=60) return finishMiniGame(false,"NPC curiga dan melapor ke security.");
+  if(miniGame.trust>=75) return finishMiniGame(true,`${miniGame.scenario.goal} berhasil didapat lewat percakapan.`);
+  renderSocialEngineering();
 }
 
 /* TERMINAL */
@@ -1164,7 +1234,7 @@ function renderTerminal(){
     <div class="card span-8">
       <h2>Neon Terminal</h2>
       <div class="terminal" id="termOut">
-        <p class="line green">CYBERTRACE NEON SHELL v9.0</p>
+        <p class="line green">CYBERTRACE NEON SHELL v10.0</p>
         <p class="line">Command fiktif: <span class="yellowtxt">scan</span>, <span class="yellowtxt">clean</span>, <span class="yellowtxt">trace</span>, <span class="yellowtxt">bounty</span>, <span class="yellowtxt">status</span>, <span class="yellowtxt">help</span></p>
         <p class="line bluetxt">Semua command hanya simulasi game.</p>
       </div>
@@ -1548,24 +1618,54 @@ function upgradeSkill(id){
 
 function renderMap(){
   const areas = [
-    {name:"Public Net",req:0,desc:"Area awal, quest ringan dan training."},
-    {name:"Local Forum",req:0,desc:"Kontrak NPC dan mini bounty."},
-    {name:"Abandoned Server",req:0,desc:"Dungeon server rusak."},
-    {name:"Corporate Cloud",req:250,desc:"Misi menengah dengan Heat lebih tinggi."},
-    {name:"Dark Market",req:450,desc:"Shop risiko tinggi dan item premium."},
-    {name:"AUREX Core",req:900,desc:"Area akhir cerita utama."}
+    {name:"Public Net",req:0,desc:"Area awal, quest ringan dan training.",type:"safe",angle:300,dist:26},
+    {name:"Local Forum",req:0,desc:"Kontrak NPC dan mini bounty.",type:"safe",angle:35,dist:32},
+    {name:"Abandoned Server",req:0,desc:"Dungeon server rusak.",type:"dungeon",angle:115,dist:42},
+    {name:"Corporate Cloud",req:250,desc:"Misi menengah dengan Heat lebih tinggi.",type:"corp",angle:200,dist:54},
+    {name:"Dark Market",req:450,desc:"Shop risiko tinggi dan item premium.",type:"market",angle:260,dist:64},
+    {name:"AUREX Core",req:900,desc:"Area akhir cerita utama.",type:"boss",angle:75,dist:70}
   ];
+  const heatClass = getHeatTier().name.toLowerCase();
+  const nodes = areas.map((a,i)=>{
+    const locked = state.rep < a.req;
+    const rad = a.angle * Math.PI / 180;
+    const x = 50 + Math.cos(rad) * a.dist * .58;
+    const y = 50 + Math.sin(rad) * a.dist * .58;
+    return `<button class="sonar-node ${a.type} ${locked?"locked":"unlocked"}" style="left:${x}%;top:${y}%;" type="button" data-area="${i}">
+      <span class="node-ping"></span><b>${i+1}</b><em>${a.name}</em>
+    </button>`;
+  }).join("");
 
   $("map").innerHTML = `<div class="grid">
-    <div class="card span-12"><h2>Network Map</h2><p>Area terbuka berdasarkan reputation. Klik node untuk event singkat.</p></div>
-    <div class="card span-12"><div class="map-nodes">
-      ${areas.map((a,i)=>{
-        const locked = state.rep<a.req;
-        return `<div class="card node ${locked ? "locked" : ""}" data-area="${i}">
-          <b>${a.name}</b><p>${a.desc}</p><span class="tag ${locked ? "red" : ""}">${locked ? "Need REP "+a.req : "Unlocked"}</span>
-        </div>`;
-      }).join("")}
-    </div></div>
+    <div class="card span-12">
+      <h2>Sonar Network Map</h2>
+      <p>Network map sekarang berbentuk sonar. Tap node untuk masuk area. Heat tinggi akan membuat radar terlihat lebih berbahaya.</p>
+    </div>
+    <div class="card span-8">
+      <div class="sonar-map ${heatClass}">
+        <div class="sonar-grid"></div>
+        <div class="sonar-ring ring-a"></div>
+        <div class="sonar-ring ring-b"></div>
+        <div class="sonar-ring ring-c"></div>
+        <div class="sonar-sweep"></div>
+        <div class="sonar-core"><b>NEON HUB</b><span>@${state.username}</span></div>
+        ${nodes}
+      </div>
+    </div>
+    <div class="card span-4">
+      <h2>Node Intel</h2>
+      <p>Pilih titik sonar untuk membuka area. Node terkunci butuh REP sesuai requirement.</p>
+      <div class="list">
+        ${areas.map((a,i)=>{
+          const locked = state.rep < a.req;
+          return `<div class="item sonar-intel ${a.type}">
+            <div class="item-head"><b>${a.name}</b><span class="tag ${locked?"red":""}">${locked?"LOCKED":"ONLINE"}</span></div>
+            <p>${a.desc}</p>
+            <div class="stat"><span>REP Req</span><span class="value">${a.req}</span></div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
   </div>`;
 }
 
@@ -1725,7 +1825,7 @@ function bindGlobalEvents(){
   });
 
   document.addEventListener("click",(e)=>{
-    const t = e.target.closest("[data-go],[data-action],[data-quest],[data-buy],[data-skill],[data-area],[data-train],[data-battle],[data-breach],[data-word],[data-node],[data-pipe],[data-memory],[data-sort],[data-route],[data-pattern]");
+    const t = e.target.closest("[data-go],[data-action],[data-quest],[data-buy],[data-skill],[data-area],[data-train],[data-battle],[data-pw-method],[data-pw-user],[data-proxy-node],[data-port-scan],[data-port-exploit],[data-sniff-packet],[data-log-answer],[data-file-pick],[data-social-reply]");
     if(!t) return;
 
     if(t.dataset.go) return showView(t.dataset.go);
@@ -1735,14 +1835,15 @@ function bindGlobalEvents(){
     if(t.dataset.area !== undefined) return mapVisit(Number(t.dataset.area));
     if(t.dataset.train !== undefined) return startBattle(clone(enemies[Number(t.dataset.train)]),false);
     if(t.dataset.battle) return battleAction(t.dataset.battle);
-    if(t.dataset.breach !== undefined) return breachPick(Number(t.dataset.breach));
-    if(t.dataset.word) return wordGuess(t.dataset.word);
-    if(t.dataset.node) return nodePick(t.dataset.node);
-    if(t.dataset.pipe !== undefined) return pipeRotate(Number(t.dataset.pipe));
-    if(t.dataset.memory) return memoryPick(t.dataset.memory);
-    if(t.dataset.sort) return sortPick(t.dataset.sort);
-    if(t.dataset.route) return routePick(t.dataset.route);
-    if(t.dataset.pattern) return patternPick(t.dataset.pattern);
+    if(t.dataset.pwMethod) return passwordMethod(t.dataset.pwMethod);
+    if(t.dataset.pwUser) return passwordGuess(t.dataset.pwUser);
+    if(t.dataset.proxyNode) return proxyPick(t.dataset.proxyNode);
+    if(t.dataset.portScan) return portSelect(t.dataset.portScan);
+    if(t.dataset.portExploit) return portExploit(t.dataset.portExploit);
+    if(t.dataset.sniffPacket !== undefined) return sniffPick(t.dataset.sniffPacket);
+    if(t.dataset.logAnswer) return logAnswer(t.dataset.logAnswer);
+    if(t.dataset.filePick !== undefined) return filePick(t.dataset.filePick);
+    if(t.dataset.socialReply) return socialReply(t.dataset.socialReply);
 
     const a = t.dataset.action;
     if(a==="profile") return openProfileModal();
@@ -1755,9 +1856,11 @@ function bindGlobalEvents(){
     if(a==="startQuest") return startActiveQuest();
     if(a==="cancelQuest") return cancelQuest();
     if(a==="abortMini") return finishMiniGame(false,"Manual abort.");
-    if(a==="breachUndo") return breachUndo();
-    if(a==="pipeSubmit") return pipeSubmit();
-    if(a==="signalStop") return signalStop();
+    if(a==="proxyUndo") return proxyUndo();
+    if(a==="proxySubmit") return proxySubmit();
+    if(a==="portScan") return portScan();
+    if(a==="sniffSubmit") return sniffSubmit();
+    if(a==="exfilSubmit") return exfilSubmit();
     if(a==="enterDungeon") return enterDungeon();
     if(a==="exitDungeon") return exitDungeon();
     if(a==="fleeBattle") return fleeBattle();
