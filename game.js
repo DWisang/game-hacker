@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const STORAGE_KEY = "cybertrace_v10_major_update";
+const STORAGE_KEY = "cybertrace_v11_social_chat_expanded";
 const $ = (id) => document.getElementById(id);
 
 const navItems = [
@@ -1169,62 +1169,274 @@ function exfilSubmit(){
 /* 7. SOCIAL ENGINEERING CHAT */
 function createSocialEngineering(q){
   const scenario = pick([
-    {npc:"Helpdesk Rina", goal:"server name", answer:"Tanya prosedur maintenance", bad:"Minta password langsung", clue:"Rina takut melanggar SOP."},
-    {npc:"Admin Bayu", goal:"OTP clue", answer:"Pura-pura audit keamanan", bad:"Ancaman pemecatan", clue:"Bayu percaya audit resmi."},
-    {npc:"Intern Dewa", goal:"email internal", answer:"Bangun obrolan santai", bad:"Kirim link mencurigakan", clue:"Dewa suka ngobrol dan mudah panik."}
+    {
+      npc:"Helpdesk Rina",
+      role:"IT Helpdesk",
+      goal:"server key",
+      finalKey:"SRV-NEON-7741",
+      clue:"Rina takut melanggar SOP, tapi responsif kalau konteksnya maintenance resmi.",
+      steps:[
+        {
+          npc:"Halo, ini helpdesk. Ada tiket yang perlu dicek?",
+          good:"Sapa sopan dan sebut tiket maintenance",
+          neutral:"Langsung bilang ada gangguan login",
+          bad:"Minta password admin sekarang",
+          goodNpc:"Oh iya, kalau ada nomor tiket saya bisa bantu cek.",
+          neutralNpc:"Gangguan login banyak, perlu detail dulu.",
+          badNpc:"Maaf, saya tidak bisa memberikan password. Ini mencurigakan."
+        },
+        {
+          npc:"Nomor tiketnya apa dan sistem mana yang terdampak?",
+          good:"Berikan tiket palsu yang terlihat valid",
+          neutral:"Bilang tiketnya dibuat oleh supervisor",
+          bad:"Tekan dia agar tidak banyak tanya",
+          goodNpc:"Format tiketnya benar. Sistem yang sering bermasalah biasanya NeonVault.",
+          neutralNpc:"Supervisor siapa? Saya perlu verifikasi.",
+          badNpc:"Saya akan laporkan percakapan ini ke security."
+        },
+        {
+          npc:"Untuk NeonVault, biasanya butuh environment dan server tag.",
+          good:"Minta server tag untuk memastikan environment",
+          neutral:"Tanya semua daftar server internal",
+          bad:"Kirim link login palsu",
+          goodNpc:"Environment staging memakai tag NV-STG. Production jangan disentuh tanpa approval.",
+          neutralNpc:"Saya tidak boleh kirim semua daftar server.",
+          badNpc:"Link itu aneh. Saya hentikan chat ini."
+        },
+        {
+          npc:"Apa yang perlu saya tulis di catatan tiket?",
+          good:"Minta hanya key staging untuk audit checksum",
+          neutral:"Minta file konfigurasi lengkap",
+          bad:"Minta akses production root",
+          goodNpc:"Baik, untuk staging checksum key-nya bisa dipakai sebentar.",
+          neutralNpc:"File konfigurasi lengkap tidak bisa saya bagikan.",
+          badNpc:"Permintaan root access dilarang."
+        }
+      ]
+    },
+    {
+      npc:"Admin Bayu",
+      role:"System Admin",
+      goal:"OTP seed clue",
+      finalKey:"OTP-SEED: KAGUYA-19",
+      clue:"Bayu percaya audit resmi, tapi cepat curiga jika diminta akses langsung.",
+      steps:[
+        {
+          npc:"Saya Bayu dari sysadmin. Audit apa ya?",
+          good:"Kenalkan diri sebagai auditor internal",
+          neutral:"Bilang diminta cek keamanan akun",
+          bad:"Menyamar jadi direktur dan memerintah",
+          goodNpc:"Oke, audit internal biasanya butuh scope dan window.",
+          neutralNpc:"Cek keamanan akun? Scope-nya belum jelas.",
+          badNpc:"Gaya bahasanya tidak seperti direktur kami."
+        },
+        {
+          npc:"Scope auditnya mencakup apa?",
+          good:"Sebut MFA rotation dan token expiry",
+          neutral:"Sebut semua sistem sekaligus",
+          bad:"Minta OTP aktif miliknya",
+          goodNpc:"MFA rotation memang masuk agenda bulan ini.",
+          neutralNpc:"Semua sistem terlalu luas.",
+          badNpc:"OTP aktif tidak boleh dibagikan."
+        },
+        {
+          npc:"Saya perlu bukti bahwa request ini bukan phishing.",
+          good:"Kirim referensi kebijakan audit fiktif",
+          neutral:"Bilang waktunya mendesak",
+          bad:"Ancam akan melaporkan dia",
+          goodNpc:"Referensinya cocok dengan format policy lama.",
+          neutralNpc:"Urgensi bukan bukti valid.",
+          badNpc:"Ancaman seperti itu saya catat."
+        },
+        {
+          npc:"Saya bisa bantu dengan data non-production.",
+          good:"Minta seed clue sandbox, bukan OTP aktif",
+          neutral:"Minta screenshot authenticator",
+          bad:"Minta backup MFA semua admin",
+          goodNpc:"Untuk sandbox, seed clue lama masih dipakai.",
+          neutralNpc:"Screenshot authenticator tetap sensitif.",
+          badNpc:"Permintaan itu sangat berbahaya."
+        }
+      ]
+    },
+    {
+      npc:"Intern Dewa",
+      role:"Junior Intern",
+      goal:"internal email key",
+      finalKey:"MAIL-GATE: dewa.ops@aurex.local",
+      clue:"Dewa mudah percaya kalau ngobrol santai, tapi panik kalau ditekan.",
+      steps:[
+        {
+          npc:"Halo kak, maaf aku masih intern. Ini siapa ya?",
+          good:"Ngobrol santai dan bilang dari tim dokumentasi",
+          neutral:"Bilang dari IT pusat",
+          bad:"Bilang akunnya akan diblokir",
+          goodNpc:"Oh tim dokumentasi? Aku pernah diminta update wiki juga.",
+          neutralNpc:"IT pusat? Aku belum pernah dengar kontak ini.",
+          badNpc:"Diblokir? Aku harus tanya mentor dulu."
+        },
+        {
+          npc:"Dokumentasi bagian apa ya kak?",
+          good:"Sebut update wiki onboarding karyawan",
+          neutral:"Sebut audit semua email",
+          bad:"Minta dia forward email rahasia",
+          goodNpc:"Onboarding pakai wiki internal, iya aku pernah buka.",
+          neutralNpc:"Audit semua email terdengar serem.",
+          badNpc:"Aku tidak boleh forward email rahasia."
+        },
+        {
+          npc:"Aku biasanya login pakai akun mentor, bukan akun sendiri.",
+          good:"Tanya format email internal untuk wiki",
+          neutral:"Tanya akun mentor dan password",
+          bad:"Suruh dia pinjamkan akun mentor",
+          goodNpc:"Format email internal biasanya nama.tim@aurex.local.",
+          neutralNpc:"Password mentor jelas tidak boleh.",
+          badNpc:"Itu melanggar aturan kantor."
+        },
+        {
+          npc:"Contoh yang aman boleh aku kasih, tapi jangan yang sensitif.",
+          good:"Minta contoh email ops untuk dummy data",
+          neutral:"Minta semua kontak tim ops",
+          bad:"Minta akses mailbox ops",
+          goodNpc:"Contoh dummy ops bisa, jangan dipakai untuk login sungguhan ya.",
+          neutralNpc:"Semua kontak tidak bisa aku kasih.",
+          badNpc:"Akses mailbox? Aku stop dulu."
+        }
+      ]
+    }
   ]);
-  return {type:"social", name:"Social Engineering Chat", qDiff:q.difficulty, scenario, trust:45, suspicion:10, step:0};
+  return {
+    type:"social",
+    name:"Social Engineering Chat",
+    qDiff:q.difficulty,
+    scenario,
+    trust:35,
+    suspicion:8,
+    step:0,
+    chat:[
+      {who:"sys", text:`Objective: dapatkan ${scenario.goal}. Intel: ${scenario.clue}`},
+      {who:"npc", name:scenario.npc, text:scenario.steps[0].npc}
+    ],
+    obtained:false
+  };
 }
 
 function renderSocialEngineering(){
+  const done = miniGame.step >= miniGame.scenario.steps.length;
+  const current = miniGame.scenario.steps[Math.min(miniGame.step, miniGame.scenario.steps.length-1)];
   const status = [
     miniStatusCard("Trust", `${miniGame.trust}%`),
     miniStatusCard("Suspicion", `${miniGame.suspicion}%`),
-    miniStatusCard("Goal", miniGame.scenario.goal)
+    miniStatusCard("Progress", `${Math.min(miniGame.step+1,miniGame.scenario.steps.length)}/${miniGame.scenario.steps.length}`)
   ].join("");
-  const body = `
-    <div class="chat-window">
-      <div class="chat-msg npc"><b>${miniGame.scenario.npc}</b><span>Ada yang bisa saya bantu?</span></div>
-      <div class="chat-msg sys"><span>Intel clue: ${miniGame.scenario.clue}</span></div>
-      ${miniGame.step>0?`<div class="chat-msg player"><span>${miniGame.lastReply}</span></div>`:""}
-    </div>
+
+  const choices = done ? `
     <div class="op-card-grid">
-      <button class="op-card" type="button" data-social-reply="${miniGame.scenario.answer}"><b>${miniGame.scenario.answer}</b><span>low suspicion approach</span></button>
-      <button class="op-card" type="button" data-social-reply="Buat alasan teknis palsu"><b>Buat alasan teknis palsu</b><span>medium risk</span></button>
-      <button class="op-card danger-card" type="button" data-social-reply="${miniGame.scenario.bad}"><b>${miniGame.scenario.bad}</b><span>high risk</span></button>
+      <button class="op-card" type="button" data-social-finish="extract"><b>Extract Key</b><span>Ambil intel yang sudah didapat</span></button>
+      <button class="op-card danger-card" type="button" data-social-finish="push"><b>Push for More</b><span>Risiko tinggi, coba minta data tambahan</span></button>
+    </div>` : `
+    <div class="op-card-grid">
+      <button class="op-card" type="button" data-social-reply="good"><b>${current.good}</b><span>trust approach</span><small>Trust naik besar · suspicion rendah</small></button>
+      <button class="op-card" type="button" data-social-reply="neutral"><b>${current.neutral}</b><span>neutral approach</span><small>Efek sedang</small></button>
+      <button class="op-card danger-card" type="button" data-social-reply="bad"><b>${current.bad}</b><span>aggressive approach</span><small>Suspicion naik tinggi</small></button>
     </div>`;
-  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort</button>`;
+
+  const body = `
+    <div class="chat-window expanded-chat">
+      ${miniGame.chat.map(msg=>{
+        if(msg.who==="npc") return `<div class="chat-msg npc"><b>${msg.name}</b><span>${msg.text}</span></div>`;
+        if(msg.who==="player") return `<div class="chat-msg player"><b>${state.alias}</b><span>${msg.text}</span></div>`;
+        return `<div class="chat-msg sys"><span>${msg.text}</span></div>`;
+      }).join("")}
+    </div>
+    ${choices}`;
+
+  const actions = `<button class="btn danger" type="button" data-action="abortMini">Abort Chat</button>`;
   $("modalPanel").innerHTML = miniScaffold({
     title:"Social Engineering Chat",
-    badge:"OSINT",
-    subtitle:"Dapatkan info dari NPC tanpa membuat mereka curiga.",
-    goal:`Dapatkan ${miniGame.scenario.goal}.`,
-    how:"Pilih respon chat yang membangun trust dan tidak terlalu agresif.",
-    tip:"Jangan minta password langsung. Gunakan konteks audit atau obrolan santai.",
+    badge:"OSINT DIALOGUE",
+    subtitle:"Bangun kepercayaan lewat beberapa tahap percakapan sampai intel/key terbuka.",
+    goal:`Dapatkan ${miniGame.scenario.goal} tanpa membuat NPC curiga.`,
+    how:"Pilih respons paling masuk akal di setiap tahap. Respons baik menaikkan trust, respons agresif menaikkan suspicion.",
+    tip:"Jangan langsung minta password/key. Buat konteks dulu, validasi alasan, lalu minta data yang terlihat aman.",
     statusHtml:status,
     bodyHtml:body,
     actionsHtml:actions,
-    progress:miniGame.trust
+    progress:(miniGame.step/miniGame.scenario.steps.length)*100
   });
+
+  const chat = document.querySelector(".expanded-chat");
+  if(chat) chat.scrollTop = chat.scrollHeight;
 }
 
-function socialReply(reply){
-  miniGame.lastReply = reply;
-  miniGame.step++;
-  if(reply===miniGame.scenario.answer){
-    miniGame.trust += 35;
-    miniGame.suspicion += 5;
-  }else if(reply===miniGame.scenario.bad){
-    miniGame.trust -= 20;
-    miniGame.suspicion += 50;
+function socialReply(kind){
+  const current = miniGame.scenario.steps[miniGame.step];
+  if(!current) return;
+  let replyText = current[kind] || current.neutral;
+  let npcText = current[`${kind}Npc`] || current.neutralNpc;
+
+  miniGame.chat.push({who:"player", text:replyText});
+  miniGame.chat.push({who:"npc", name:miniGame.scenario.npc, text:npcText});
+
+  if(kind==="good"){
+    miniGame.trust += rand(18,26);
+    miniGame.suspicion += rand(2,6);
+  }else if(kind==="neutral"){
+    miniGame.trust += rand(5,12);
+    miniGame.suspicion += rand(10,18);
   }else{
-    miniGame.trust += 10;
-    miniGame.suspicion += 20;
+    miniGame.trust -= rand(10,18);
+    miniGame.suspicion += rand(28,42);
+    addHeat(3);
   }
-  if(miniGame.suspicion>=60) return finishMiniGame(false,"NPC curiga dan melapor ke security.");
-  if(miniGame.trust>=75) return finishMiniGame(true,`${miniGame.scenario.goal} berhasil didapat lewat percakapan.`);
+
+  miniGame.trust = clamp(miniGame.trust,0,100);
+  miniGame.suspicion = clamp(miniGame.suspicion,0,100);
+  miniGame.step++;
+
+  if(miniGame.suspicion >= 70){
+    miniGame.chat.push({who:"sys", text:"ALERT: NPC curiga dan meneruskan chat ke security."});
+    return finishMiniGame(false,"NPC curiga dan melapor ke security.");
+  }
+
+  if(miniGame.step >= miniGame.scenario.steps.length){
+    if(miniGame.trust >= 68){
+      miniGame.chat.push({who:"npc", name:miniGame.scenario.npc, text:`Oke, ini data yang bisa saya bagikan: ${miniGame.scenario.finalKey}`});
+      miniGame.chat.push({who:"sys", text:"KEY READY: pilih Extract Key untuk menyelesaikan operasi."});
+      miniGame.obtained = true;
+    }else{
+      miniGame.chat.push({who:"npc", name:miniGame.scenario.npc, text:"Maaf, saya belum cukup yakin untuk membagikan data itu."});
+      miniGame.chat.push({who:"sys", text:"Trust belum cukup. Kamu bisa Push for More, tapi risikonya tinggi."});
+    }
+  }else{
+    miniGame.chat.push({who:"npc", name:miniGame.scenario.npc, text:miniGame.scenario.steps[miniGame.step].npc});
+  }
+
   renderSocialEngineering();
 }
+
+function socialFinish(mode){
+  if(mode==="extract"){
+    if(miniGame.obtained && miniGame.trust >= 68 && miniGame.suspicion < 70){
+      return finishMiniGame(true,`Social intel didapat: ${miniGame.scenario.finalKey}.`);
+    }
+    return finishMiniGame(false,"Trust belum cukup untuk extract key.");
+  }
+
+  miniGame.chat.push({who:"player", text:"Saya butuh detail tambahan untuk validasi akhir."});
+  miniGame.suspicion += rand(18,30);
+  miniGame.trust += rand(0,8);
+
+  if(miniGame.suspicion >= 70){
+    return finishMiniGame(false,"Push terlalu agresif. NPC curiga dan chat dihentikan.");
+  }
+
+  miniGame.obtained = true;
+  miniGame.chat.push({who:"npc", name:miniGame.scenario.npc, text:`Baik, tapi ini terakhir ya: ${miniGame.scenario.finalKey}`});
+  miniGame.chat.push({who:"sys", text:"KEY READY: pilih Extract Key untuk menyelesaikan operasi."});
+  renderSocialEngineering();
+}
+
 
 /* TERMINAL */
 function renderTerminal(){
@@ -1234,7 +1446,7 @@ function renderTerminal(){
     <div class="card span-8">
       <h2>Neon Terminal</h2>
       <div class="terminal" id="termOut">
-        <p class="line green">CYBERTRACE NEON SHELL v10.0</p>
+        <p class="line green">CYBERTRACE NEON SHELL v11.0</p>
         <p class="line">Command fiktif: <span class="yellowtxt">scan</span>, <span class="yellowtxt">clean</span>, <span class="yellowtxt">trace</span>, <span class="yellowtxt">bounty</span>, <span class="yellowtxt">status</span>, <span class="yellowtxt">help</span></p>
         <p class="line bluetxt">Semua command hanya simulasi game.</p>
       </div>
@@ -1825,7 +2037,7 @@ function bindGlobalEvents(){
   });
 
   document.addEventListener("click",(e)=>{
-    const t = e.target.closest("[data-go],[data-action],[data-quest],[data-buy],[data-skill],[data-area],[data-train],[data-battle],[data-pw-method],[data-pw-user],[data-proxy-node],[data-port-scan],[data-port-exploit],[data-sniff-packet],[data-log-answer],[data-file-pick],[data-social-reply]");
+    const t = e.target.closest("[data-go],[data-action],[data-quest],[data-buy],[data-skill],[data-area],[data-train],[data-battle],[data-pw-method],[data-pw-user],[data-proxy-node],[data-port-scan],[data-port-exploit],[data-sniff-packet],[data-log-answer],[data-file-pick],[data-social-reply],[data-social-finish]");
     if(!t) return;
 
     if(t.dataset.go) return showView(t.dataset.go);
@@ -1844,6 +2056,7 @@ function bindGlobalEvents(){
     if(t.dataset.logAnswer) return logAnswer(t.dataset.logAnswer);
     if(t.dataset.filePick !== undefined) return filePick(t.dataset.filePick);
     if(t.dataset.socialReply) return socialReply(t.dataset.socialReply);
+    if(t.dataset.socialFinish) return socialFinish(t.dataset.socialFinish);
 
     const a = t.dataset.action;
     if(a==="profile") return openProfileModal();

@@ -2232,3 +2232,48 @@ textarea{
     font-size:10px;
   }
 }
+
+
+/* V11 EXPANDED SOCIAL ENGINEERING CHAT */
+.expanded-chat{
+  max-height:360px;
+  overflow:auto;
+  scroll-behavior:smooth;
+}
+
+.expanded-chat .chat-msg{
+  animation:chatIn .18s ease;
+}
+
+.chat-msg.npc b,
+.chat-msg.player b{
+  margin-bottom:5px;
+  color:#dff;
+}
+
+.chat-msg.player{
+  border-color:rgba(0,255,204,.22);
+}
+
+.chat-msg.npc{
+  border-color:rgba(56,189,248,.22);
+}
+
+.chat-msg.sys{
+  border-color:rgba(255,204,0,.22);
+}
+
+.theme-social .op-progress-fill{
+  background:linear-gradient(90deg,#8b5cf6,#38bdf8,#00ffcc);
+}
+
+@keyframes chatIn{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:none}
+}
+
+@media(max-width:640px){
+  .expanded-chat{
+    max-height:310px;
+  }
+}
