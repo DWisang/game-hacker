@@ -2277,3 +2277,26 @@ textarea{
     max-height:310px;
   }
 }
+
+
+/* V12 BILINGUAL LANGUAGE TOGGLE */
+.side-actions.side-actions-3{
+  grid-template-columns:1fr .8fr 1fr;
+}
+
+#langBtn{
+  border-color:rgba(56,189,248,.36);
+  background:rgba(56,189,248,.09);
+  color:#dff6ff;
+}
+
+#langBtn:hover{
+  border-color:rgba(56,189,248,.65);
+  box-shadow:0 0 18px rgba(56,189,248,.14);
+}
+
+@media(max-width:640px){
+  .side-actions.side-actions-3{
+    grid-template-columns:1fr 1fr 1fr;
+  }
+}

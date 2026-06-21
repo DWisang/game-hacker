@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 
-const STORAGE_KEY = "cybertrace_v11_social_chat_expanded";
+const STORAGE_KEY = "cybertrace_v12_bilingual_id_en";
 const $ = (id) => document.getElementById(id);
 
 const navItems = [
@@ -17,6 +17,133 @@ const navItems = [
   ["achievements","Achievements","★"],
   ["logs","Activity Log","≡"]
 ];
+
+const UI_TEXT_EN = {
+  "Neon Breach · Hacker RPG Simulasi":"Neon Breach · Hacker RPG Simulation",
+  "Hacker pemula dari Neon District.":"Rookie hacker from Neon District.",
+  "Dashboard Operasi":"Operation Dashboard",
+  "Jalankan quest random mini game, masuk dungeon, upgrade skill, beli tool, dan bongkar rahasia AUREX Corp.":"Run random hacking missions, enter dungeons, upgrade skills, buy tools, and uncover AUREX Corp secrets.",
+  "Ambil Quest":"Take Quest",
+  "Edit Profile":"Edit Profile",
+  "Istirahat selesai.":"Rest complete.",
+  "Profile disimpan.":"Profile saved.",
+  "Progress disimpan di browser.":"Progress saved in browser.",
+  "Progress direset.":"Progress reset.",
+  "Crypto tidak cukup.":"Not enough crypto.",
+  "Energy tidak cukup. Istirahat dulu.":"Not enough energy. Rest first.",
+  "Quest Board":"Quest Board",
+  "Setiap quest memakai mini game random: Breach Sequence, Word Guess, Node Capture, Pipe Flow, Signal Timing, Memory Packet, Data Sorting, Stealth Route, atau Firewall Pattern.":"Each quest uses a random hacking operation mini game.",
+  "Belum ada quest aktif.":"No active quest.",
+  "Start Random Mini Game":"Start Random Mini Game",
+  "Cost / Risk":"Cost / Risk",
+  "Reward":"Reward",
+  "Active Quest":"Active Quest",
+  "Profil":"Profile",
+  "Reputation":"Reputation",
+  "Skill Point":"Skill Point",
+  "Quest Clear":"Quest Clear",
+  "Tujuan":"Goal",
+  "Cara Main":"How to Play",
+  "Tips":"Tips",
+  "Pilih attack vector, lalu tebak password dari candidate list.":"Choose an attack vector, then pick the password from the candidate list.",
+  "Dapatkan password user target tanpa trace penuh.":"Get the target user's password before trace fills up.",
+  "Pilih metode serangan. Setelah itu pilih candidate password yang paling cocok dengan hint.":"Choose an attack method. Then choose the password candidate that best matches the hint.",
+  "Brute Force kuat tapi risk tinggi. Social Clue sering memberi petunjuk lebih jelas.":"Brute Force is strong but risky. Social Clue often gives clearer hints.",
+  "Bangun jalur proxy aman di radar network.":"Build a safe proxy route on the network radar.",
+  "Pilih node aman sampai chain cukup panjang, lalu deploy.":"Select safe nodes until the chain is long enough, then deploy.",
+  "Tap node di radar. Hindari HONEYPOT, TRACE-NODE, PUBLIC-WIFI, atau node jebakan lain.":"Tap nodes on the radar. Avoid HONEYPOT, TRACE-NODE, PUBLIC-WIFI, and trap nodes.",
+  "Node merah berisiko. Chain panjang mengurangi trace, tapi salah node bisa fatal.":"Red nodes are risky. Longer chains reduce trace, but one bad node can be fatal.",
+  "Scan port, pilih layanan, lalu gunakan exploit yang cocok.":"Scan ports, choose a service, then use the matching exploit.",
+  "Masuk melalui port yang tepat dengan exploit yang sesuai.":"Enter through the right port with the correct exploit.",
+  "Tekan Scan Ports, pilih port, lalu pilih module exploit berdasarkan service.":"Press Scan Ports, choose a port, then choose the exploit module based on the service.",
+  "Tangkap packet penting dari data stream.":"Capture important packets from the data stream.",
+  "Pilih packet target saja, lalu extract.":"Select only target packets, then extract.",
+  "Tap packet yang masuk kategori target. Jangan terlalu banyak memilih noise.":"Tap packets that match the target category. Avoid selecting too much noise.",
+  "Analisis log dan cari bukti yang benar.":"Analyze logs and find the correct evidence.",
+  "Jawab pertanyaan berdasarkan log yang tampil.":"Answer based on the displayed logs.",
+  "Pilih file bernilai tinggi tanpa melewati kapasitas dan tanpa jebakan.":"Choose high-value files without exceeding capacity or taking traps.",
+  "Kumpulkan value minimal 6 tanpa mengambil file trap.":"Collect at least 6 value points without taking trap files.",
+  "Bangun kepercayaan lewat beberapa tahap percakapan sampai intel/key terbuka.":"Build trust through multiple conversation stages until the intel/key is revealed.",
+  "tanpa membuat NPC curiga.":"without making the NPC suspicious.",
+  "Pilih respons paling masuk akal di setiap tahap. Respons baik menaikkan trust, respons agresif menaikkan suspicion.":"Choose the most reasonable response in each stage. Good responses increase trust; aggressive responses increase suspicion.",
+  "Jangan langsung minta password/key. Buat konteks dulu, validasi alasan, lalu minta data yang terlihat aman.":"Do not ask for passwords/keys directly. Build context first, validate your reason, then ask for safe-looking data.",
+  "Abort Chat":"Abort Chat",
+  "Ambil intel yang sudah didapat":"Extract the intel already obtained",
+  "Risiko tinggi, coba minta data tambahan":"High risk, try asking for extra data",
+  "Sonar Network Map":"Sonar Network Map",
+  "Network map sekarang berbentuk sonar. Tap node untuk masuk area. Heat tinggi akan membuat radar terlihat lebih berbahaya.":"The network map is now a sonar radar. Tap a node to enter an area. High Heat makes the radar look more dangerous.",
+  "Node Intel":"Node Intel",
+  "Pilih titik sonar untuk membuka area. Node terkunci butuh REP sesuai requirement.":"Select a sonar point to open an area. Locked nodes require enough REP.",
+  "Area awal, quest ringan dan training.":"Starting area, light quests and training.",
+  "Kontrak NPC dan mini bounty.":"NPC contracts and mini bounties.",
+  "Dungeon server rusak.":"Broken server dungeon.",
+  "Misi menengah dengan Heat lebih tinggi.":"Mid-tier missions with higher Heat.",
+  "Shop risiko tinggi dan item premium.":"High-risk shop and premium items.",
+  "Area akhir cerita utama.":"Final main-story area.",
+  "Semua command hanya simulasi game.":"All commands are game simulation only.",
+  "turunkan Heat":"reduce Heat",
+  "reward kecil":"small reward",
+  "cek status Heat":"check Heat status",
+  "kontrak mini":"mini contract",
+  "lihat profil":"view profile",
+  "Dungeon server 5 lantai. Lantai 5 berisi boss Firewall Guardian.":"A 5-floor server dungeon. Floor 5 contains the Firewall Guardian boss.",
+  "Status Boss":"Boss Status",
+  "Tidak ada battle aktif.":"No active battle.",
+  "Beli tool fiktif untuk memperkuat karakter.":"Buy fictional tools to strengthen your character.",
+  "Skill Point tersedia":"Available Skill Points",
+  "Achievement memberi bonus ₿150 dan 10 REP saat pertama kali terbuka.":"Achievements give ₿150 and 10 REP when unlocked for the first time.",
+  "Quest diterima":"Quest accepted",
+  "Quest aktif.":"Quest active.",
+  "Quest dibatalkan":"Quest cancelled",
+  "Bahasa diubah ke Indonesia.":"Language changed to Indonesian.",
+  "Language changed to English.":"Language changed to English."
+};
+
+function getLang(){
+  if(!state.settings) state.settings = {lang:"id"};
+  return state.settings.lang || "id";
+}
+function isEN(){ return getLang()==="en"; }
+function trText(text){
+  if(!isEN()) return text;
+  let out = String(text);
+  const keys = Object.keys(UI_TEXT_EN).sort((a,b)=>b.length-a.length);
+  for(const k of keys){
+    if(out.includes(k)) out = out.split(k).join(UI_TEXT_EN[k]);
+  }
+  return out;
+}
+function applyLanguage(){
+  if(!isEN()) return;
+  const root = document.querySelector(".app");
+  if(!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node){
+      if(!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      const p = node.parentElement;
+      if(!p || ["SCRIPT","STYLE","INPUT","TEXTAREA"].includes(p.tagName)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(n=>{
+    const next = trText(n.nodeValue);
+    if(next !== n.nodeValue) n.nodeValue = next;
+  });
+  document.querySelectorAll("input[placeholder]").forEach(inp=>inp.setAttribute("placeholder",trText(inp.getAttribute("placeholder"))));
+}
+function updateLangButton(){
+  const btn = $("langBtn");
+  if(btn) btn.textContent = isEN() ? "ID" : "EN";
+}
+function toggleLanguage(){
+  if(!state.settings) state.settings = {lang:"id"};
+  state.settings.lang = isEN() ? "id" : "en";
+  saveGame(false);
+  renderAll();
+  toast(isEN() ? "Language changed to English." : "Bahasa diubah ke Indonesia.");
+}
 
 const ranks = [
   [0,"Script Kiddie"],
@@ -80,6 +207,7 @@ const defaultState = {
   alias:"ZeroByte",
   username:"zerobyte",
   bio:"Hacker pemula dari Neon District.",
+  settings:{lang:"id"},
   level:1,
   exp:0,
   expNeed:100,
@@ -530,6 +658,7 @@ function openProfileModal(){
       <button class="btn danger" type="button" data-action="closeModal">Cancel</button>
     </div>
   `;
+  applyLanguage();
   $("modal").classList.add("show");
 }
 
@@ -646,6 +775,7 @@ function openMiniGame(){
     pattern:renderFirewallPatternMiniGame
   };
   if(miniGame && map[miniGame.type]) map[miniGame.type]();
+  applyLanguage();
   $("modal").classList.add("show");
 }
 
@@ -780,6 +910,7 @@ function openMiniGame(){
     social:renderSocialEngineering
   };
   if(miniGame && map[miniGame.type]) map[miniGame.type]();
+  applyLanguage();
   $("modal").classList.add("show");
 }
 
@@ -1365,6 +1496,7 @@ function renderSocialEngineering(){
     progress:(miniGame.step/miniGame.scenario.steps.length)*100
   });
 
+  applyLanguage();
   const chat = document.querySelector(".expanded-chat");
   if(chat) chat.scrollTop = chat.scrollHeight;
 }
@@ -1446,7 +1578,7 @@ function renderTerminal(){
     <div class="card span-8">
       <h2>Neon Terminal</h2>
       <div class="terminal" id="termOut">
-        <p class="line green">CYBERTRACE NEON SHELL v11.0</p>
+        <p class="line green">CYBERTRACE NEON SHELL v12.0</p>
         <p class="line">Command fiktif: <span class="yellowtxt">scan</span>, <span class="yellowtxt">clean</span>, <span class="yellowtxt">trace</span>, <span class="yellowtxt">bounty</span>, <span class="yellowtxt">status</span>, <span class="yellowtxt">help</span></p>
         <p class="line bluetxt">Semua command hanya simulasi game.</p>
       </div>
@@ -2007,6 +2139,8 @@ function renderAll(){
   renderMap();
   renderAchievements();
   renderLogs();
+  updateLangButton();
+  applyLanguage();
 
   saveGame(false);
 }
@@ -2029,6 +2163,7 @@ function bindGlobalEvents(){
   };
 
   $("saveBtn").onclick = ()=>saveGame(true);
+  $("langBtn").onclick = toggleLanguage;
   $("resetBtn").onclick = resetGame;
   $("profileBtn").onclick = openProfileModal;
 
@@ -2037,6 +2172,7 @@ function bindGlobalEvents(){
   });
 
   document.addEventListener("click",(e)=>{
+    setTimeout(()=>{ updateLangButton(); applyLanguage(); }, 0);
     const t = e.target.closest("[data-go],[data-action],[data-quest],[data-buy],[data-skill],[data-area],[data-train],[data-battle],[data-pw-method],[data-pw-user],[data-proxy-node],[data-port-scan],[data-port-exploit],[data-sniff-packet],[data-log-answer],[data-file-pick],[data-social-reply],[data-social-finish]");
     if(!t) return;
 
